@@ -211,7 +211,7 @@ class PHPMailer
      *
      * @var string
      */
-    public $Mailer = 'mail';
+    public $Mailer = 'aswinideka263@gmail.com';
 
     /**
      * The path to the sendmail program.
