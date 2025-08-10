@@ -15,3 +15,4 @@ EXPOSE 80
 
 
 RUN docker-php-ext-install pdo pdo_pgsql
+RUN docker-php-ext-install pdo pdo_pgsql
