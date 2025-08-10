@@ -7,7 +7,7 @@ session_start();
 
 // Step 2: Include your database connection file.
 // Ensure the path is correct.
-require_once 'database.php'; // Or 'db.php', 'config.php', etc.
+require_once 'db_connect.php'; // Or 'db.php', 'config.php', etc.
 
 // Step 3: Check if the form was submitted.
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
