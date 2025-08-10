@@ -1,4 +1,9 @@
 <?php
+
+// Add this right at the beginning
+var_dump($_POST);
+die(); 
+// ... rest of your code
 session_start();
 
 // Include the database connection file
