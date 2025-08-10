@@ -1,44 +1,32 @@
-<!-- <?php
-$host = "localhost";
-$db_user = "root";
-$db_pass = "";
-$db_name = "my_shop_db"; // Change to your database name
-$port = 3307; // Default MySQL port, change if necessary
-
-$conn = new mysqli($host, $db_user, $db_pass, $db_name, $port);
-
-if ($conn->connect_error) {
-    die("Database connection failed: " . $conn->connect_error);
-}
-?>
- -->
-
-
-
 <?php
-// db_connect.php (Production Ready)
+// Get the database URL from Render's environment variables
+$database_url = getenv('DATABASE_URL');
 
-// These lines will get the database credentials from the Render server environment.
-$servername = getenv('DB_HOST');
-$username = getenv('DB_USER');
-$password = getenv('DB_PASSWORD');
-$dbname = getenv('DB_NAME');
-
-// For local development with XAMPP, it will fall back to your old settings.
-if (empty($servername)) {
-    $servername = "localhost";
-    $username = "root";
-    $password = ""; // Your XAMPP password, if you have one
-    $dbname = "my_shop_db";
+if ($database_url === false) {
+    die("Error: DATABASE_URL environment variable not set.");
 }
 
-// Create connection
-$conn = new mysqli($servername, $username, $password, $dbname);
+// Parse the URL into its components
+$url_parts = parse_url($database_url);
 
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+$host = $url_parts['host'];
+$port = $url_parts['port'];
+$dbname = ltrim($url_parts['path'], '/');
+$user = $url_parts['user'];
+$password = $url_parts['pass'];
+
+// Create the DSN (Data Source Name) string for PDO
+$dsn = "pgsql:host=$host;port=$port;dbname=$dbname;user=$user;password=$password";
+
+try {
+    // Create a new PDO instance
+    $pdo = new PDO($dsn);
+
+    // Set the error mode to throw exceptions
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+} catch (PDOException $e) {
+    // If connection fails, show the error
+    die("Database connection failed: " . $e->getMessage());
 }
-
-$conn->set_charset("utf8mb4");
 ?>
