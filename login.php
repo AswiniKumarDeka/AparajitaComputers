@@ -21,7 +21,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $role_selected = strtolower(trim($_POST['role']));
 
     // Prepare and execute query
-    $stmt = $conn->prepare("SELECT id, username, password, role, is_suspended FROM users WHERE username = ?");
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
     if (!$stmt) {
         die("Prepare failed: " . $conn->error);
     }
