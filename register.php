@@ -1,47 +1,62 @@
 <?php
-session_start();
+// register.php
 
-// Include the database connection file
-require 'db_connect.php';
+// Step 1: Include your database connection file.
+// Make sure the path is correct. This is the most important step.
+require_once 'database.php'; // Or 'db.php', 'config.php', etc.
 
-// Check if the form was submitted
+// Initialize a variable to hold messages to the user.
+$message = '';
+
+// Step 2: Check if the form was submitted using the POST method.
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-    // Check for empty fields
-    if (empty($_POST['username']) || empty($_POST['email']) || empty($_POST['password']) || empty($_POST['role'])) {
-        die("Error: All fields are required.");
-    }
+    // Step 3: Check if all required fields are filled.
+    if (empty($_POST['username']) || empty($_POST['email']) || empty($_POST['password'])) {
+        $message = 'Please fill out all fields.';
+    } else {
+        // Sanitize user input to prevent XSS attacks (basic sanitation).
+        $username = htmlspecialchars($_POST['username']);
+        $email = htmlspecialchars($_POST['email']);
+        $password = $_POST['password'];
 
-    // Get form data
-    $username = trim($_POST['username']);
-    $email = trim($_POST['email']);
-    $password = $_POST['password'];
-    $role = strtolower(trim($_POST['role']));
+        // --- DATABASE INTERACTION ---
+        try {
+            // Step 4: Check if the username or email already exists in the database.
+            $sql_check = "SELECT * FROM users WHERE username = ? OR email = ?";
+            $stmt_check = $pdo->prepare($sql_check);
+            $stmt_check->execute([$username, $email]);
+            
+            if ($stmt_check->rowCount() > 0) {
+                // User already exists.
+                $message = 'Username or email already taken.';
+            } else {
+                // Step 5: Hash the password for security.
+                // Never store plain text passwords!
+                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-    // --- IMPORTANT: Hash the password for security ---
-    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-
-    try {
-        // Prepare the SQL INSERT statement
-        $sql = "INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)";
-        $stmt = $pdo->prepare($sql);
-
-        // Execute the statement with the form data
-        // The order of variables in the array MUST match the order of columns in the SQL
-        $stmt->execute([$username, $email, $hashed_password, $role]);
-
-        // If successful, redirect to the login page
-        echo "Registration successful! You can now log in.";
-        header("Location: login.php");
-        exit();
-
-    } catch (PDOException $e) {
-        // Handle potential errors, like a duplicate email
-        if ($e->getCode() == 23505) { // 23505 is the SQLSTATE for unique violation
-            die("Error: This email address is already registered.");
-        } else {
-            die("Database query failed: " . $e->getMessage());
+                // Step 6: Insert the new user into the database.
+                $sql_insert = "INSERT INTO users (username, email, password) VALUES (?, ?, ?)";
+                $stmt_insert = $pdo->prepare($sql_insert);
+                
+                // Execute the statement.
+                if ($stmt_insert->execute([$username, $email, $hashed_password])) {
+                    $message = 'Registration successful! You can now <a href="login.html">sign in</a>.';
+                } else {
+                    $message = 'An unexpected error occurred during registration.';
+                }
+            }
+        } catch (PDOException $e) {
+            // This will catch any database-related errors.
+            // In production, you might want to log this error instead of showing it to the user.
+            // error_log("Registration Error: " . $e->getMessage());
+            $message = 'Database error. Please try again later.';
         }
     }
+}
+
+// Display the message to the user if it's not empty.
+if (!empty($message)) {
+    echo "<div class='message'>{$message}</div>";
 }
 ?>
