@@ -1,5 +1,4 @@
 
-
 <?php
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -22,10 +21,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     } else {
         echo "Error: " . $stmt->error;
     }
-    catch (Exception $e) {
+catch (Exception $e) {
     echo "<pre style='color:red;'>".$e->getMessage()."</pre>";
     exit;
 }
-
 }
 ?>
