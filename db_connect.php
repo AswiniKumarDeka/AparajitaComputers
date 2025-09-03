@@ -1,17 +1,18 @@
+// db_connect.php
 <?php
-$host     = "d2s3c1u3jp1c738qktg0-a.oregon-postgres.render.com"; // full host
+$host     = "d2s3c1u3jp1c738qktg0-a.oregon-postgres.render.com";
 $port     = "5432";
 $dbname   = "aparajita_db";
 $user     = "aparajita_db_user";
-$password = "yiDKShPoESiyS151fldPy1QJIZVZ8LG1";
+$password = "your-long-password";
 
 try {
-    $dsn = "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require";
-    $pdo = new PDO($dsn, $user, $password, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-    ]);
-    // echo "Connected!";
+    $pdo = new PDO(
+        "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require",
+        $user,
+        $password,
+        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+    );
 } catch (PDOException $e) {
-    echo "DB connect error: " . $e->getMessage();
-    exit;
+    die("DB connect error: " . $e->getMessage());
 }
