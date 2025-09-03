@@ -1,8 +1,5 @@
 
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
 
 require 'db_connect.php';
 
@@ -21,9 +18,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     } else {
         echo "Error: " . $stmt->error;
     }
-catch (Exception $e) {
-    echo "<pre style='color:red;'>".$e->getMessage()."</pre>";
-    exit;
 }
 }
 ?>
