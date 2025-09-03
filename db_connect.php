@@ -1,12 +1,17 @@
 <?php
-$dsn = "pgsql:host=".$_ENV['DB_HOST'].";port=".$_ENV['DB_PORT'].";dbname=".$_ENV['DB_NAME'];
+$host     = "d2s3c1u3jp1c738qktg0-a.oregon-postgres.render.com"; // full host
+$port     = "5432";
+$dbname   = "aparajita_db";
+$user     = "aparajita_db_user";
+$password = "your-long-password";
 
 try {
-    $pdo = new PDO($dsn, $_ENV['DB_USER'], $_ENV['DB_PASSWORD']);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    // connected successfully
+    $dsn = "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require";
+    $pdo = new PDO($dsn, $user, $password, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+    ]);
+    // echo "Connected!";
 } catch (PDOException $e) {
     echo "DB connect error: " . $e->getMessage();
     exit;
 }
-?>
