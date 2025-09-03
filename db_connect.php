@@ -1,4 +1,4 @@
-// db_connect.php
+
 <?php
 $host     = "d2s3c1u3jp1c738qktg0-a.oregon-postgres.render.com";
 $port     = "5432";
