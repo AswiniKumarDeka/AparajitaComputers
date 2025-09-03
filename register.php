@@ -35,8 +35,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
 
     } catch (PDOException $e) {
-        // handle duplicate email or other DB error
-        echo "<p style='color:red;'>Registration failed: " . htmlspecialchars($e->getMessage()) . "</p>";
+    echo "<pre style='color:red;'>";
+    echo "Registration failed: " . $e->getMessage();
+    echo "</pre>";
+    exit;
+}
+
     }
 }
 ?>
