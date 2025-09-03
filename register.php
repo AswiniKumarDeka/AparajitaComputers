@@ -1,23 +1,66 @@
-
 <?php
+// show real errors (good for debugging – remove in production)
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 
 require 'db_connect.php';
 
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $username = trim($_POST['username']);
-    $password = $_POST['password'];
-    $role = $_POST['role'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $name     = trim($_POST['username'] ?? '');
+    $email    = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
 
-    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+    if ($name === '' || $email === '' || $password === '') {
+        echo "<p style='color:red;'>All fields are required.</p>";
+        exit;
+    }
 
-    $stmt = $conn->prepare("INSERT INTO users (username, password, role, is_suspended) VALUES (?, ?, ?, 0)");
-    $stmt->bind_param("sss", $username, $hashed_password, $role);
+    // hash password (bcrypt)
+    $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
 
-    if ($stmt->execute()) {
-        header("Location: login.html?error=" . urlencode("Registered successfully! Please log in."));
-    } else {
-        echo "Error: " . $stmt->error;
+    try {
+        // insert into users table
+        $stmt = $pdo->prepare(
+            "INSERT INTO users (name, email, password, role) 
+             VALUES (:name, :email, :password, 'user')"
+        );
+        $stmt->execute([
+            ':name'     => $name,
+            ':email'    => $email,
+            ':password' => $hashedPassword
+        ]);
+
+        // optional: redirect to login
+        header("Location: login.php?registered=1");
+        exit;
+
+    } catch (PDOException $e) {
+        // handle duplicate email or other DB error
+        echo "<p style='color:red;'>Registration failed: " . htmlspecialchars($e->getMessage()) . "</p>";
     }
 }
-}
 ?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Register</title>
+</head>
+<body>
+  <h2>Create an Account</h2>
+  <form method="post" action="register.php">
+      <label>Username</label>
+      <input type="text" name="username" required><br><br>
+
+      <label>Email</label>
+      <input type="email" name="email" required><br><br>
+
+      <label>Password</label>
+      <input type="password" name="password" required><br><br>
+
+      <button type="submit">Register</button>
+  </form>
+  <p>Already have an account? <a href="login.php">Sign in here</a></p>
+</body>
+</html>
