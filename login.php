@@ -33,7 +33,7 @@ try {
         $_SESSION['role'] = $user['role'];
         
         // Determine redirect based on role
-        $redirectUrl = ($user['role'] === 'admin') ? 'admin_dashboard.php' : 'dashboard.php';
+        $redirectUrl = ($user['role'] === 'admin') ? 'admin_dashboard.php' : 'index.php';
 
         echo json_encode(['success' => true, 'redirect' => $redirectUrl]);
         exit;
