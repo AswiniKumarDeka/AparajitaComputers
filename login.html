@@ -71,10 +71,18 @@
         })
         .then(response => response.json())
         .then(data => {
-            if (data.success) {
-                // If login is successful, redirect to the page PHP sent us
-                window.location.href = data.redirect;
-            } else if (data.error) {
+          if (data.success) {
+                  // Show a green success message
+                  errorMessageDiv.style.color = 'green';
+                  errorMessageDiv.textContent = 'Login successful! Redirecting...';
+                  errorMessageDiv.classList.remove('hidden');
+              
+                  // Wait 1.5 seconds, then redirect
+                  setTimeout(() => {
+                      window.location.href = data.redirect;
+                  }, 1500);
+          
+          } else if (data.error) {
                 // If there's an error, show it in the error div
                 errorMessageDiv.textContent = data.error;
                 errorMessageDiv.classList.remove('hidden');
