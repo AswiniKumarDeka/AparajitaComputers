@@ -1,5 +1,5 @@
 <?php
-// Set the content type to JSON
+// Set the content type to JSON so JavaScript can understand it
 header('Content-Type: application/json');
 require 'db_connect.php';
 
@@ -21,28 +21,19 @@ if (empty($email) || empty($password)) {
 
 try {
     // Look up the user by email
-    $stmt = $conn->prepare("SELECT id, password, role FROM users WHERE email = :email");
-    $stmt->execute([':email' => $email]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    // Verify the user exists and the password is correct
-   try {
-    // MODIFIED: Added 'username' to the SELECT statement
     $stmt = $conn->prepare("SELECT id, username, password, role FROM users WHERE email = :email");
     $stmt->execute([':email' => $email]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
+    // Verify the user exists and the password is correct
     if ($user && password_verify($password, $user['password'])) {
+        // Login successful, set session variables
         $_SESSION['user_id'] = $user['id'];
+        $_SESSION['username'] = $user['username'];
         $_SESSION['role'] = $user['role'];
-        $_SESSION['username'] = $user['username']; // ADDED: Save username to session
-
-        $redirectUrl = ($user['role'] === 'admin') ? 'admin_dashboard.php' : 'dashboard.php';
-        echo json_encode(['success' => true, 'redirect' => $redirectUrl]);
-        exit;
         
         // Determine redirect based on role
-        $redirectUrl = ($user['role'] === 'admin') ? 'admin_dashboard.php' : 'index.html';
+        $redirectUrl = ($user['role'] === 'admin') ? 'admin_dashboard.php' : 'dashboard.php';
 
         echo json_encode(['success' => true, 'redirect' => $redirectUrl]);
         exit;
@@ -52,8 +43,9 @@ try {
         exit;
     }
 } catch (PDOException $e) {
-    // Database error
-    echo json_encode(['error' => 'A database error occurred.']);
+    // This is the missing block that fixes the error
+    // It catches potential database errors
+    echo json_encode(['error' => 'A database error occurred. Please try again.']);
     exit;
 }
 ?>
