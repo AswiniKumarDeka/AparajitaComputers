@@ -19,9 +19,9 @@ if (!isset($_SESSION['user_id'])) {
 </head>
 <body class="bg-gray-900 text-white p-8">
     <div class="container mx-auto">
-        <h1 class="text-3xl font-bold text-cyan-400">Welcome to your Dashboard!</h1>
-        <p class="mt-4">You are successfully logged in.</p>
-
+        <h1 class="text-3xl font-bold text-cyan-400">PAGE UNDER MAINTAINENCE!</h1>
+        
+        <h1 class="text-3xl font-bold text-cyan-400">WE WILL BE BACK SHORTLY</h1>
         <a href="logout.php" class="text-red-400 hover:underline mt-6 inline-block">Logout</a>
     </div>
 </body>
