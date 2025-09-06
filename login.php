@@ -1,4 +1,12 @@
+
 <?php
+session_start(); // ADD THIS LINE
+
+// Security Check: Ensure user is logged in
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.html?error=You must be logged in to make a payment.");
+    exit;
+}
 // Set the content type to JSON so JavaScript can understand it
 header('Content-Type: application/json');
 require 'db_connect.php';
