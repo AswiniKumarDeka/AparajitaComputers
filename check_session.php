@@ -1,28 +1,29 @@
 <?php
-// check_session.php
-// This script's only job is to check if a user is logged in
-// and return a simple JSON response for the JavaScript to read.
+// Set the content type to JSON so JavaScript can understand it
+header('Content-Type: application/json');
+require 'db_connect.php'; // We need this to get user details
 
-// The session must be started to access session variables.
 session_start();
 
-// Prepare the response array
-$response = [
-    'loggedin' => false,
-    'username' => null,
-    'role' => null
-];
+$response = ['loggedin' => false];
 
-// Check if the session variables are set from a successful login
-if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true) {
-    $response['loggedin'] = true;
-    $response['username'] = $_SESSION['username'];
-    $response['role'] = $_SESSION['role'];
+if (isset($_SESSION['user_id'])) {
+    try {
+        // Fetch user details to get username and role
+        $stmt = $conn->prepare("SELECT username, role FROM users WHERE id = :id");
+        $stmt->execute([':id' => $_SESSION['user_id']]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($user) {
+            $response['loggedin'] = true;
+            $response['username'] = $user['username'];
+            $response['role'] = $user['role'];
+        }
+    } catch (PDOException $e) {
+        // If there's a DB error, treat as logged out
+        $response['loggedin'] = false;
+    }
 }
 
-// Set the content type header to application/json
-header('Content-Type: application/json');
-
-// Echo the response as a JSON string
 echo json_encode($response);
 ?>
