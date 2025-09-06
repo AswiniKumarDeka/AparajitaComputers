@@ -12,15 +12,15 @@ if (!isset($_SESSION['user_id'])) {
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-session_start();
+// session_start();
 
-// --- STEP 2: CRUCIAL SECURITY CHECK ---
-// This guard is at the very top. If the user is not logged in,
-// the script stops here and redirects them. No other code will run.
-if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
-    header("Location: login.html?error=Please log in to place an order.");
-    die("Redirecting to login page..."); 
-}
+// // --- STEP 2: CRUCIAL SECURITY CHECK ---
+// // This guard is at the very top. If the user is not logged in,
+// // the script stops here and redirects them. No other code will run.
+// if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
+//     header("Location: login.html?error=Please log in to place an order.");
+//     die("Redirecting to login page..."); 
+// }
 
 // --- If the script reaches this point, the user is confirmed to be logged in. ---
 
