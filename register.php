@@ -1,54 +1,57 @@
 <?php
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
+// return JSON
+header('Content-Type: application/json');
 
-require 'db_connect.php';
+require 'db_connect.php';   // <- must create a PDO $conn (or mysqli) connection
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name     = trim($_POST['username'] ?? '');
-    $email    = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
-
-    if ($name === '' || $email === '' || $password === '') {
-        echo "<p style='color:red;'>All fields are required.</p>";
+try {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        http_response_code(405);
+        echo json_encode(['error' => 'Method not allowed']);
         exit;
     }
 
-    $hashed = password_hash($password, PASSWORD_BCRYPT);
+    // Accept either raw JSON or classic form POST
+    $input = [];
+    if (stripos($_SERVER['CONTENT_TYPE'] ?? '', 'application/json') !== false) {
+        $input = json_decode(file_get_contents('php://input'), true) ?: [];
+    } else {
+        $input = $_POST;
+    }
 
-    try {
-        // change "name" to "username" here if that's your column
-        $stmt = $pdo->prepare(
-            "INSERT INTO users (name, email, password, role)
-             VALUES (:name, :email, :password, 'user')"
-        );
-        $stmt->execute([
-            ':name'     => $name,
-            ':email'    => $email,
-            ':password' => $hashed
-        ]);
+    $username = trim($input['username'] ?? '');
+    $email    = trim($input['email'] ?? '');
+    $password = $input['password'] ?? '';
 
-        echo "<p style='color:green;'>Registration successful!</p>";
-        // header("Location: login.php"); exit;
-
-    } catch (PDOException $e) {
-        echo "<pre style='color:red;'>".$e->getMessage()."</pre>";
+    if (!$username || !$email || !$password) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Please fill in all required fields.']);
         exit;
     }
+
+    // hash password securely (bcrypt)
+    $hash = password_hash($password, PASSWORD_BCRYPT);
+
+    // prepare insert — change the table/column names to match your schema
+    $sql = "INSERT INTO users (username, email, password, role, is_suspended)
+            VALUES (:u, :e, :p, 'user', 0)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(':u', $username);
+    $stmt->bindParam(':e', $email);
+    $stmt->bindParam(':p', $hash);
+
+    $stmt->execute();
+
+    echo json_encode(['message' => 'Registered successfully!']);
+} catch (PDOException $e) {
+    // 23505 = unique_violation in PostgreSQL
+    if ($e->getCode() === '23505') {
+        echo json_encode(['error' => 'Username or Email already exists.']);
+    } else {
+        http_response_code(500);
+        echo json_encode(['error' => 'Database error: '.$e->getMessage()]);
+    }
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Server error: '.$e->getMessage()]);
 }
-?>
-
-<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8"><title>Register</title></head>
-<body>
-<h2>Create Account</h2>
-<form method="post" action="register.php">
-  <label>Username <input type="text" name="username" required></label><br><br>
-  <label>Email <input type="email" name="email" required></label><br><br>
-  <label>Password <input type="password" name="password" required></label><br><br>
-  <button type="submit">Register</button>
-</form>
-<p>Already have an account? <a href="login.php">Sign in</a></p>
-</body>
-</html>
