@@ -17,7 +17,7 @@
 
     <div id="errorMessage" class="hidden text-center p-3 bg-red-500/20 text-red-400 rounded-md"></div>
 
-    <form action="login.php" method="POST" class="space-y-6">
+    <form id="loginForm" action="login.php" method="POST" class="space-y-6">
       <div>
         <label for="role" class="block text-sm font-medium text-gray-300 mb-2">Login as:</label>
         <select name="role" id="role" required class="w-full px-4 py-3 bg-gray-700 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-cyan-500">
@@ -26,12 +26,17 @@
         </select>
       </div>
       <div>
-        <input type="text" name="username" placeholder="Username" required
+        <input type="email" name="email" placeholder="Email" required
                class="w-full px-4 py-3 bg-gray-700 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-cyan-500" />
       </div>
       <div>
-        <input type="password" name="password" placeholder="Password" required
-               class="w-full px-4 py-3 mt-1 bg-gray-700 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+        <div class="relative">
+            <input type="password" id="password" name="password" placeholder="Password" required
+                   class="w-full px-4 py-3 pr-10 bg-gray-700 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+            <span id="togglePassword" class="absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+            </span>
+        </div>
         <div class="flex justify-end mt-2">
           <a href="forgot_password.html" class="text-xs text-cyan-400 hover:underline">Forgot Password?</a>
         </div>
@@ -51,13 +56,50 @@
   </div>
 
   <script>
-    const params = new URLSearchParams(window.location.search);
-    const error = params.get('error');
-    if (error) {
-      const errorMessageDiv = document.getElementById('errorMessage');
-      errorMessageDiv.textContent = decodeURIComponent(error);
-      errorMessageDiv.classList.remove('hidden');
-    }
+    document.getElementById('loginForm').addEventListener('submit', function(event) {
+        event.preventDefault(); // Stop the page from reloading
+
+        const formData = new FormData(this);
+        const errorMessageDiv = document.getElementById('errorMessage');
+
+        // Hide previous error messages
+        errorMessageDiv.classList.add('hidden');
+
+        fetch('login.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // If login is successful, redirect to the page PHP sent us
+                window.location.href = data.redirect;
+            } else if (data.error) {
+                // If there's an error, show it in the error div
+                errorMessageDiv.textContent = data.error;
+                errorMessageDiv.classList.remove('hidden');
+            }
+        })
+        .catch(error => {
+            errorMessageDiv.textContent = 'A network error occurred. Please try again.';
+            errorMessageDiv.classList.remove('hidden');
+            console.error('Error:', error);
+        });
+    });
   </script>
+  <script>
+    // This is the script for the eye icon
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+    const eyeSlashIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 .946-3.118 3.526-5.449 6.836-6.182M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 2l20 20" /></svg>`;
+    const eyeIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>`;
+    
+    togglePassword.addEventListener('click', function () {
+        const isPassword = passwordInput.getAttribute('type') === 'password';
+        passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+        this.innerHTML = isPassword ? eyeSlashIcon : eyeIcon;
+    });
+  </script>
+
 </body>
 </html>
