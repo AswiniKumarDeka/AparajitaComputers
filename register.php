@@ -23,10 +23,11 @@ try {
 
     // Insert user (role defaults to 'user', suspended = 0)
     $stmt = $conn->prepare(
-        "INSERT INTO users (username, email, password, role, is_suspended)
-         VALUES (:username, :email, :password, 'user', FALSE)"
+        "INSERT INTO users (name, username, email, password, role, is_suspended)
+         VALUES (:name, :username, :email, :password, 'user', FALSE)"
     );
     $stmt->execute([
+        ':name' => $username,      
         ':username' => $username,
         ':email'    => $email,
         ':password' => $hashed,
