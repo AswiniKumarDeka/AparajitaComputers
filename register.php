@@ -1,8 +1,5 @@
 <?php
 header('Content-Type: application/json');
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
-
 require 'db_connect.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -10,6 +7,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+// Get and sanitize
 $username = trim($_POST['username'] ?? '');
 $email    = trim($_POST['email'] ?? '');
 $password = $_POST['password'] ?? '';
@@ -19,18 +17,23 @@ if ($username === '' || $email === '' || $password === '') {
     exit;
 }
 
-$hashed = password_hash($password, PASSWORD_DEFAULT);
-
 try {
+    // Hash password securely
+    $hashed = password_hash($password, PASSWORD_DEFAULT);
+
+    // Insert user (role defaults to 'user', suspended = 0)
     $stmt = $conn->prepare(
         "INSERT INTO users (username, email, password, role, is_suspended)
-         VALUES (?, ?, ?, 'user', 0)"
+         VALUES (:username, :email, :password, 'user', 0)"
     );
-    $stmt->bind_param("sss", $username, $email, $hashed);
-    $stmt->execute();
+    $stmt->execute([
+        ':username' => $username,
+        ':email'    => $email,
+        ':password' => $hashed,
+    ]);
 
     echo json_encode(['message' => 'Registered successfully!']);
 } catch (Throwable $e) {
+    // Likely unique constraint or SQL error
     echo json_encode(['error' => $e->getMessage()]);
 }
-exit;
