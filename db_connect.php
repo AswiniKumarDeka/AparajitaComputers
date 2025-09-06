@@ -1,23 +1,38 @@
 <?php
-$dsn = getenv('DATABASE_URL'); // Render provides this automatically
-if (!$dsn) {
-    // local dev
-    $dsn = 'pgsql:host=localhost;port=5432;dbname=mydb';
+// db_connect.php — Render-friendly PDO Postgres connection
+
+// Turn on strict errors in dev; hide notices in prod
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+
+$databaseUrl = getenv('DATABASE_URL');
+if (!$databaseUrl) {
+    // local fallback
+    $host = 'localhost';
+    $port = 5432;
+    $db   = 'aparajita_db';
     $user = 'postgres';
-    $pass = 'secret';
+    $pass = 'postgres';
+    $dsn  = "pgsql:host=$host;port=$port;dbname=$db";
 } else {
-    // parse DATABASE_URL for Render
-    $db = parse_url($dsn);
-    $dsn = sprintf("pgsql:host=%s;port=%s;dbname=%s",
-        $db['host'],
-        $db['port'],
-        ltrim($db['path'], '/')
-    );
-    $user = $db['user'];
-    $pass = $db['pass'];
+    // parse Render DATABASE_URL
+    $parts = parse_url($databaseUrl);
+    $host  = $parts['host'];
+    $port  = $parts['port'] ?? 5432;
+    $db    = ltrim($parts['path'], '/');
+    $user  = $parts['user'];
+    $pass  = $parts['pass'];
+    $dsn   = "pgsql:host=$host;port=$port;dbname=$db";
 }
 
-$conn = new PDO($dsn, $user, $pass, [
-    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-]);
+try {
+    $conn = new PDO($dsn, $user, $pass, [
+        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    ]);
+} catch (Throwable $e) {
+    // Return JSON error immediately
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'DB connect error: ' . $e->getMessage()]);
+    exit;
+}
