@@ -1,12 +1,5 @@
 <?php
-session_start(); // ADD THIS LINE
-
-// Security Check: Ensure user is logged in
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.html?error=You must be logged in to make a payment.");
-    exit;
-}
-// Set the content type to JSON so JavaScript can understand it
+// Set the content type to JSON
 header('Content-Type: application/json');
 require 'db_connect.php';
 
@@ -40,8 +33,9 @@ try {
         $_SESSION['role'] = $user['role'];
         
         // Determine redirect based on role
-        $redirectUrl = ($user['role'] === 'admin') ? 'admin_dashboard.php' : 'index.html';
+        $redirectUrl = ($user['role'] === 'admin') ? 'admin_dashboard.php' : 'dashboard.php';
 
+        // Send a success message with the redirect URL
         echo json_encode(['success' => true, 'redirect' => $redirectUrl]);
         exit;
     } else {
@@ -50,9 +44,8 @@ try {
         exit;
     }
 } catch (PDOException $e) {
-    // This is the missing block that fixes the error
-    // It catches potential database errors
-    echo json_encode(['error' => 'A database error occurred. Please try again.']);
+    // Database error
+    echo json_encode(['error' => 'A database error occurred.']);
     exit;
 }
 ?>
