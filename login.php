@@ -6,7 +6,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
 
     // Look up the user
-    $stmt = $pdo->prepare("SELECT id, password FROM users WHERE email = :email");
+    $stmt = $conn->prepare("SELECT id, password FROM users WHERE email = :email");
     $stmt->execute([':email' => $email]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
