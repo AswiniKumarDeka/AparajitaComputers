@@ -26,10 +26,20 @@ try {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     // Verify the user exists and the password is correct
+   try {
+    // MODIFIED: Added 'username' to the SELECT statement
+    $stmt = $conn->prepare("SELECT id, username, password, role FROM users WHERE email = :email");
+    $stmt->execute([':email' => $email]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
     if ($user && password_verify($password, $user['password'])) {
-        // Login successful, set session variables
         $_SESSION['user_id'] = $user['id'];
-        $_SESSION['role'] = $user['role']; // Store user role in session
+        $_SESSION['role'] = $user['role'];
+        $_SESSION['username'] = $user['username']; // ADDED: Save username to session
+
+        $redirectUrl = ($user['role'] === 'admin') ? 'admin_dashboard.php' : 'dashboard.php';
+        echo json_encode(['success' => true, 'redirect' => $redirectUrl]);
+        exit;
         
         // Determine redirect based on role
         $redirectUrl = ($user['role'] === 'admin') ? 'admin_dashboard.php' : 'index.html';
