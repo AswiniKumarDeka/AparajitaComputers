@@ -1,4 +1,11 @@
 <?php
+session_start(); // ADD THIS LINE
+
+// Security Check: Ensure user is logged in
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.html?error=You must be logged in to make a payment.");
+    exit;
+}
 // payment.php (Full-Featured, Secure, and Corrected Version)
 
 // --- STEP 1: Enhanced Error Reporting (for debugging) ---
