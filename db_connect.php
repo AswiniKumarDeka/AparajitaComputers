@@ -1,18 +1,23 @@
-
 <?php
-$host     = "d2s3c1u3jp1c738qktg0-a.oregon-postgres.render.com";
-$port     = "5432";
-$dbname   = "aparajita_db";
-$user     = "aparajita_db_user";
-$password = "yiDKShPoESiyS151fldPy1QJIZVZ8LG1";
-
-try {
-    $pdo = new PDO(
-        "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require",
-        $user,
-        $password,
-        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+$dsn = getenv('DATABASE_URL'); // Render provides this automatically
+if (!$dsn) {
+    // local dev
+    $dsn = 'pgsql:host=localhost;port=5432;dbname=mydb';
+    $user = 'postgres';
+    $pass = 'secret';
+} else {
+    // parse DATABASE_URL for Render
+    $db = parse_url($dsn);
+    $dsn = sprintf("pgsql:host=%s;port=%s;dbname=%s",
+        $db['host'],
+        $db['port'],
+        ltrim($db['path'], '/')
     );
-} catch (PDOException $e) {
-    die("DB connect error: " . $e->getMessage());
+    $user = $db['user'];
+    $pass = $db['pass'];
 }
+
+$conn = new PDO($dsn, $user, $pass, [
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+]);
