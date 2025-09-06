@@ -24,7 +24,7 @@ try {
     // Insert user (role defaults to 'user', suspended = 0)
     $stmt = $conn->prepare(
         "INSERT INTO users (username, email, password, role, is_suspended)
-         VALUES (:username, :email, :password, 'user', 0)"
+         VALUES (:username, :email, :password, 'user', FALSE)"
     );
     $stmt->execute([
         ':username' => $username,
