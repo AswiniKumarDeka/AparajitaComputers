@@ -2,48 +2,62 @@
 session_start();
 require 'db_connect.php';
 
-// --- Security Check ---
+// Always return JSON
+header('Content-Type: application/json');
+
+// Security: only logged-in users can submit reviews
 if (!isset($_SESSION['user_id'])) {
-    header("Location: login.html");
+    echo json_encode([
+        "status" => "error",
+        "message" => "You must be logged in to submit a review."
+    ]);
     exit;
 }
 
-// --- Fetch User Data ---
-$userId = $_SESSION['user_id'];
-$user = null;
-$uploads = [];
-$orders = [];
+$user_id = $_SESSION['user_id'];
+$rating  = isset($_POST['rating']) ? intval($_POST['rating']) : 0;
+$comment = isset($_POST['comment']) ? trim($_POST['comment']) : "";
 
-try {
-    // --- CORRECTED: Fetch user profile using mysqli syntax ---
-    $stmt = $conn->prepare("SELECT name, email, created_at FROM users WHERE id = ?");
-    $stmt->bind_param("i", $userId);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $user = $result->fetch_assoc();
-    $stmt->close();
-
-    // --- CORRECTED: Fetch uploads using mysqli syntax ---
-    $stmt = $conn->prepare("SELECT original_file_name, uploaded_at FROM uploads WHERE user_id = ? ORDER BY uploaded_at DESC LIMIT 5");
-    $stmt->bind_param("i", $userId);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $uploads = $result->fetch_all(MYSQLI_ASSOC);
-    $stmt->close();
-
-    // --- CORRECTED: Fetch orders using mysqli syntax ---
-    $stmt = $conn->prepare("SELECT service_name, payment_status, payment_date FROM payments WHERE user_id = ? ORDER BY payment_date DESC LIMIT 5");
-    $stmt->bind_param("i", $userId);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $orders = $result->fetch_all(MYSQLI_ASSOC);
-    $stmt->close();
-
-} catch (Exception $e) {
-    // A generic Exception is better here than PDOException for mysqli
-    error_log("Dashboard Error: " . $e->getMessage());
-    die("Error: Could not fetch user data. Please contact support.");
+// Validate input
+if ($rating < 1 || $rating > 5) {
+    echo json_encode([
+        "status" => "error",
+        "message" => "Invalid rating value."
+    ]);
+    exit;
 }
 
-$conn->close(); // It's good practice to close the connection when done.
-?>
+if (empty($comment)) {
+    echo json_encode([
+        "status" => "error",
+        "message" => "Review comment cannot be empty."
+    ]);
+    exit;
+}
+
+try {
+    $stmt = $conn->prepare("INSERT INTO reviews (user_id, rating, comment) VALUES (?, ?, ?)");
+    if (!$stmt) {
+        throw new Exception("Prepare failed: " . $conn->error);
+    }
+
+    $stmt->bind_param("iis", $user_id, $rating, $comment);
+    if ($stmt->execute()) {
+        echo json_encode([
+            "status" => "success",
+            "message" => "Thank you! Your review has been submitted."
+        ]);
+    } else {
+        throw new Exception("Execute failed: " . $stmt->error);
+    }
+
+    $stmt->close();
+    $conn->close();
+
+} catch (Exception $e) {
+    error_log("Review Submit Error: " . $e->getMessage());
+    echo json_encode([
+        "status" => "error",
+        "message" => "An unexpected error occurred. Please try again later."
+    ]);
+}
