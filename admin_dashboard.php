@@ -1,13 +1,4 @@
 <?php
-session_start(); // ADD THIS LINE
-
-// Security Check: Ensure user is logged in
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.html?error=You must be logged in to make a payment.");
-    exit;
-}
-// This is the main landing page for the admin.
-
 require 'admin_auth_check.php'; 
 ?>
 <!DOCTYPE html>
