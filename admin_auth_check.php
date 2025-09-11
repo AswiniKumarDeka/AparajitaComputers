@@ -1,12 +1,16 @@
 <?php
-// FILE 4 of 9: admin_auth_check.php
+// FILE: admin_auth_check.php
 // ===================================================================
-// This is the security guard. It is the ONLY file that should start the session for admin pages.
+// Security guard for all admin pages.
+// Always include this at the top of admin-only files.
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-if (!isset($_SESSION['loggedin']) || $_SESSION['role'] !== 'admin') {
-    header("Location: login.html?error=Access Denied.");
-    die("Redirecting...");
+
+// Ensure user is logged in AND has admin role
+if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
+    header("Location: login.html?error=Access Denied. Admins only.");
+    exit;
 }
 ?>
