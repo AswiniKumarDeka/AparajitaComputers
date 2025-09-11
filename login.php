@@ -1,70 +1,61 @@
 <?php
-// Always start the session at the very beginning
 session_start();
+require 'db_connect.php'; // Your central PDO connection
 
-// Include the database connection file
-require 'db_connect.php';
-
-// Set the header to return JSON
 header('Content-Type: application/json');
 
 // Function to send a JSON response and exit
-function json_response($success, $message, $data = []) {
-    echo json_encode(['success' => $success, 'message' => $message, 'data' => $data]);
+function json_response($data) {
+    echo json_encode($data);
     exit;
 }
 
-// --- 1. Basic Validation ---
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    json_response(false, 'Invalid request method.');
+    json_response(['success' => false, 'error' => 'Invalid request method.']);
 }
 
-if (!isset($_POST['email'], $_POST['password'])) {
-    json_response(false, 'Email and password are required.');
+// 1. Validate inputs
+$email = $_POST['email'] ?? null;
+$password = $_POST['password'] ?? null;
+$role = $_POST['role'] ?? null;
+
+if (empty($email) || empty($password) || empty($role)) {
+    json_response(['success' => false, 'error' => 'All fields are required.']);
 }
 
-$email = trim($_POST['email']);
-$password = $_POST['password'];
-
-if (empty($email) || empty($password)) {
-    json_response(false, 'Please fill in both fields.');
-}
-
-// --- 2. Database Interaction ---
+// 2. Fetch user from database based on email AND role
 try {
-    // Prepare a statement to select the user by email
-    $stmt = $conn->prepare("SELECT id, name, email, password, role FROM users WHERE email = ?");
-    $stmt->execute([$email]);
-    
-    // Fetch the user
+    $stmt = $conn->prepare("SELECT id, name, password, role FROM users WHERE email = ? AND role = ?");
+    $stmt->execute([$email, $role]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // --- 3. Verify User and Password ---
+    // 3. Verify password and proceed
     if ($user && password_verify($password, $user['password'])) {
-        // --- SUCCESSFUL LOGIN ---
-        
-        // Regenerate session ID for security
-        session_regenerate_id(true);
+        // --- LOGIN SUCCESS ---
+        session_regenerate_id(true); // Prevent session fixation attacks
 
         // Set session variables
         $_SESSION['user_id'] = $user['id'];
-        $_SESSION['username'] = $user['name']; // Using 'name' column for username
-        $_SESSION['role'] = $user['role']; // Store the user's role
+        $_SESSION['username'] = $user['name'];
+        $_SESSION['role'] = $user['role'];
 
-        json_response(true, 'Login successful! Redirecting...');
+        // Determine the correct redirect URL based on role
+        $redirectUrl = ($user['role'] === 'admin') ? 'admin_dashboard.php' : 'dashboard.php';
+
+        // Send the redirect URL back to the JavaScript
+        json_response(['success' => true, 'redirect' => $redirectUrl]);
 
     } else {
-        // --- FAILED LOGIN ---
-        json_response(false, 'Invalid email or password.');
+        // --- LOGIN FAILED ---
+        json_response(['success' => false, 'error' => 'Invalid email, password, or role.']);
     }
 
 } catch (PDOException $e) {
-    // --- DATABASE ERROR ---
-    // In a production environment, you would log this error.
-    error_log('Login PDOException: ' . $e->getMessage());
-    json_response(false, 'A server error occurred. Please try again later.');
+    error_log("Login Error: " . $e->getMessage()); // Log error for server admin
+    json_response(['success' => false, 'error' => 'A server error occurred. Please try again later.']);
 }
 
-// Close the connection
 $conn = null;
 ?>
+
+
