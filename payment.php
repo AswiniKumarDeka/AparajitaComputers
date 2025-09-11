@@ -61,7 +61,6 @@ try {
     $api_error = "Unexpected error: " . $e->getMessage();
 }
 
-// --- STEP 6: Fetch user details from DB ---
 // --- STEP 6: Fetch user details from DB (PDO Version) ---
 $customer_name  = isset($_SESSION['username']) ? $_SESSION['username'] : "Customer";
 $customer_email = "unknown@example.com";
@@ -71,15 +70,15 @@ if (!empty($_SESSION['user_id'])) {
     $stmt = $conn->prepare("SELECT email FROM users WHERE id = ?");
 
     // Execute the statement, passing parameters as an array
-    $stmt->execute([$_SESSION['user_id']]);
+    $stmt->execute([$_SESSION['user__id']]);
 
     // Fetch the user data
-    $user = $stmt->fetch(); // No need for get_result()->fetch_assoc()
+    $user = $stmt->fetch();
 
     if ($user) {
         $customer_email = $user['email'];
     }
-}
+} // <--- THIS is the curly brace that was likely missing.
 
 // Close the connection by setting the object to null
 $conn = null;
