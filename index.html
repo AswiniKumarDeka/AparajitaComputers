@@ -190,24 +190,14 @@
 
     <script>
       document.addEventListener('DOMContentLoaded', async () => {
-        // --- START: Maintenance Modal Logic ---
         const modal = document.getElementById('maintenance-modal');
         const closeModalBtn = document.getElementById('close-modal-btn');
-
-        if (!sessionStorage.getItem('maintenanceNoticeSeen')) {
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                modal.classList.remove('modal-fade-enter-from');
-                modal.classList.add('modal-fade-enter-to');
-            }, 10);
-        }
 
         const closeModal = () => {
             modal.classList.remove('modal-fade-enter-to');
             modal.classList.add('modal-fade-enter-from');
             setTimeout(() => {
                 modal.classList.add('hidden');
-                sessionStorage.setItem('maintenanceNoticeSeen', 'true');
             }, 300);
         };
 
@@ -217,8 +207,6 @@
                 closeModal();
             }
         });
-        // --- END: Maintenance Modal Logic ---
-
 
         const baseUrl = '.'; 
         let isUserLoggedIn = false;
@@ -383,12 +371,27 @@
             const uploadSection = document.getElementById('upload');
             const uploadCustomerName = document.getElementById('upload-customer-name');
             const uploadCustomerEmail = document.getElementById('upload-customer-email');
+            const adminPanelLink = document.getElementById('admin-panel-link');
 
             if (session.loggedin) {
                 isUserLoggedIn = true;
                 navLoggedOut.classList.add('hidden');
                 navLoggedIn.classList.remove('hidden');
-                welcomeMessage.textContent = `Welcome, ${session.username}!`;
+                welcomeMessage.textContent = `Welcome, ${escapeHTML(session.username)}!`;
+
+                // Handle UI based on role
+                if (session.role === 'admin') {
+                    adminPanelLink.classList.remove('hidden');
+                } else {
+                    // This is a regular 'user'
+                    adminPanelLink.classList.add('hidden');
+                    const modal = document.getElementById('maintenance-modal');
+                    modal.classList.remove('hidden');
+                    setTimeout(() => {
+                        modal.classList.remove('modal-fade-enter-from');
+                        modal.classList.add('modal-fade-enter-to');
+                    }, 10);
+                }
                 
                 servicesSection.classList.remove('hidden');
                 navServicesLink.classList.remove('hidden');
@@ -458,6 +461,7 @@
     </script>
 </body>
 </html>
+
 
 
 
