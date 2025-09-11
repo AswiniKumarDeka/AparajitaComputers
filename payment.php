@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// --- STEP 1: Error reporting (for debugging) ---
+// --- STEP 1: Error reporting (for debugging only, remove on production) ---
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
@@ -88,13 +88,13 @@ $conn->close();
             <h1 class="text-3xl font-bold text-cyan-400">Complete Your Order</h1>
         </div>
 
-        <?php if ($api_error): ?>
+        <?php if ($api_error) { ?>
             <div class="p-4 bg-red-500/20 text-red-400 rounded-md text-center">
                 <h3 class="font-bold">Payment System Error!</h3>
                 <p><?php echo htmlspecialchars($api_error); ?></p>
                 <p class="mt-2 text-sm">Please check your API keys or contact support.</p>
             </div>
-        <?php else: ?>
+        <?php } else { ?>
             <div class="border-y border-gray-700 py-6 space-y-4">
                 <div class="flex justify-between items-center"><span class="text-gray-300 font-semibold">Service:</span><span class="text-lg font-bold"><?php echo $service_name; ?></span></div>
                 <div class="flex justify-between items-center"><span class="text-gray-300 font-semibold">Quantity:</span><span class="text-lg font-bold">x <?php echo $quantity; ?></span></div>
@@ -113,14 +113,37 @@ $conn->close();
                     <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-md transition-colors">Confirm Cash on Delivery</button>
                 </form>
             </div>
-        <?php endif; ?>
+        <?php } ?>
 
         <p class="text-center text-sm text-gray-400"><a href="index.html#services" class="hover:underline">&larr; Back to Services</a></p>
     </div>
 
-    <?php if (!$api_error && $razorpayOrder): ?>
+    <?php if (!$api_error && $razorpayOrder) { ?>
         <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
         <form name='razorpayform' action="verify_payment.php" method="POST">
-            <input type="hidden" name="razo
-
-    
+            <input type="hidden" name="razorpay_payment_id" id="razorpay_payment_id">
+            <input type="hidden" name="razorpay_signature"  id="razorpay_signature">
+        </form>
+        <script>
+        var options = {
+            "key": "<?php echo $keyId; ?>",
+            "amount": "<?php echo $amount_in_paise; ?>",
+            "currency": "INR",
+            "name": "Aparajita Computers",
+            "description": "Payment for <?php echo $quantity; ?> x <?php echo $service_name; ?>",
+            "order_id": "<?php echo $razorpayOrder['id']; ?>",
+            "handler": function (response){
+                document.getElementById('razorpay_payment_id').value = response.razorpay_payment_id;
+                document.getElementById('razorpay_signature').value = response.razorpay_signature;
+                document.razorpayform.submit();
+            },
+            "prefill": { "name": "<?php echo $customer_name; ?>", "email": "<?php echo $customer_email; ?>" },
+            "notes": { "service": "<?php echo $service_name; ?>", "quantity": "<?php echo $quantity; ?>" },
+            "theme": { "color": "#0891b2" }
+        };
+        var rzp1 = new Razorpay(options);
+        document.getElementById('rzp-button1').onclick = function(e){ rzp1.open(); e.preventDefault(); }
+        </script>
+    <?php } ?>
+</body>
+</html>
