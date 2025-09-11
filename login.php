@@ -40,7 +40,7 @@ try {
         $_SESSION['user_role'] = $user['role']; // ✅ matches admin_auth_check.php
 
         // Redirect URLs
-        $redirectUrl = ($user['role'] === 'admin') ? 'admin_dashboard.php' : 'user_dashboard.php';
+        $redirectUrl = ($user['role'] === 'admin') ? 'admin_dashboard.php' : 'login.html';
 
         // Send the redirect URL back to the JavaScript
         json_response(['success' => true, 'redirect' => $redirectUrl]);
