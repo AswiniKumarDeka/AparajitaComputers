@@ -42,7 +42,7 @@ try {
         if ($user['role'] === 'admin') {
             $redirectUrl = 'admin_dashboard.php';
         } else {
-            $redirectUrl = 'index.html'; // normal user goes to site homepage
+            $redirectUrl = 'dashboard.php'; // normal user goes to site homepage
         }
 
         json_response(['success' => true, 'redirect' => $redirectUrl]);
