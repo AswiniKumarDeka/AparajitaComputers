@@ -1,51 +1,36 @@
 <?php
-// Set the content type to JSON
-header('Content-Type: application/json');
+session_start();
 require 'db_connect.php';
 
-// Start the session at the beginning
-session_start();
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $email = trim($_POST['email']);
+    $password = $_POST['password'];
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    echo json_encode(['error' => 'Invalid request method.']);
-    exit;
-}
+    $stmt = $conn->prepare("SELECT id, name, password, role FROM users WHERE email = ?");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
-$email    = $_POST['email'] ?? '';
-$password = $_POST['password'] ?? '';
+    if ($row = $result->fetch_assoc()) {
+        if (password_verify($password, $row['password'])) {
+            $_SESSION['user_id'] = $row['id'];
+            $_SESSION['user_name'] = $row['name'];
+            $_SESSION['user_role'] = $row['role']; // 👈 store role in session
 
-if (empty($email) || empty($password)) {
-    echo json_encode(['error' => 'Email and password are required.']);
-    exit;
-}
-
-try {
-    // Look up the user by email
-    $stmt = $conn->prepare("SELECT id, username, password, role FROM users WHERE email = :email");
-    $stmt->execute([':email' => $email]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    // Verify the user exists and the password is correct
-    if ($user && password_verify($password, $user['password'])) {
-        // Login successful, set session variables
-        $_SESSION['user_id'] = $user['id'];
-        $_SESSION['username'] = $user['username'];
-        $_SESSION['role'] = $user['role'];
-        
-        // Determine redirect based on role
-        $redirectUrl = ($user['role'] === 'admin') ? 'admin_dashboard.php' : 'index.html';
-
-        // Send a success message with the redirect URL
-        echo json_encode(['success' => true, 'redirect' => $redirectUrl]);
-        exit;
+            // Redirect based on role
+            if ($row['role'] === 'admin') {
+                header("Location: admin_dashboard.php");
+            } else {
+                header("Location: user_dashboard.php");
+            }
+            exit;
+        } else {
+            $error = "Invalid password.";
+        }
     } else {
-        // Invalid credentials
-        echo json_encode(['error' => 'Invalid email or password.']);
-        exit;
+        $error = "No account found with that email.";
     }
-} catch (PDOException $e) {
-    // Database error
-    echo json_encode(['error' => 'A database error occurred.']);
-    exit;
+
+    $stmt->close();
 }
-?>
+$conn->close();
