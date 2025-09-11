@@ -6,7 +6,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = trim($_POST['email']);
     $password = $_POST['password'];
 
-    $stmt = $conn->prepare("SELECT id, name, password, role FROM users WHERE email = ?");
+    $stmt = $conn->prepare("SELECT id, name, password, role FROM users WHERE email = ? AND role = 'admin'");
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -15,20 +15,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (password_verify($password, $row['password'])) {
             $_SESSION['user_id'] = $row['id'];
             $_SESSION['user_name'] = $row['name'];
-            $_SESSION['user_role'] = $row['role']; // 👈 store role in session
-
-            // Redirect based on role
-            if ($row['role'] === 'admin') {
-                header("Location: admin_dashboard.php");
-            } else {
-                header("Location: user_dashboard.php");
-            }
+            $_SESSION['user_role'] = 'admin';
+            header("Location: admin_dashboard.php");
             exit;
         } else {
             $error = "Invalid password.";
         }
     } else {
-        $error = "No account found with that email.";
+        $error = "Invalid admin account.";
     }
 
     $stmt->close();
