@@ -62,22 +62,27 @@ try {
 }
 
 // --- STEP 6: Fetch user details from DB ---
+// --- STEP 6: Fetch user details from DB (PDO Version) ---
 $customer_name  = isset($_SESSION['username']) ? $_SESSION['username'] : "Customer";
 $customer_email = "unknown@example.com";
 
 if (!empty($_SESSION['user_id'])) {
+    // Prepare the statement using the PDO $conn object
     $stmt = $conn->prepare("SELECT email FROM users WHERE id = ?");
-    $stmt->bind_param("i", $_SESSION['user_id']);
-    $stmt->execute();
-    $user = $stmt->get_result()->fetch_assoc();
+
+    // Execute the statement, passing parameters as an array
+    $stmt->execute([$_SESSION['user_id']]);
+
+    // Fetch the user data
+    $user = $stmt->fetch(); // No need for get_result()->fetch_assoc()
+
     if ($user) {
         $customer_email = $user['email'];
     }
-    $stmt->close();
 }
 
-$conn->close();
-?>
+// Close the connection by setting the object to null
+$conn = null;
 <!DOCTYPE html>
 <html lang="en">
 <head>
