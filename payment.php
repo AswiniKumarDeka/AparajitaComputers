@@ -1,10 +1,4 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
-
-
 session_start();
 
 // --- STEP 1: Error reporting (for debugging only, remove on production) ---
@@ -37,8 +31,8 @@ if ($base_price <= 0 || $quantity <= 0) {
     die("Invalid price or quantity.");
 }
 
-$final_price      = $base_price * $quantity;
-$amount_in_paise  = $final_price * 100;
+$final_price     = $base_price * $quantity;
+$amount_in_paise = $final_price * 100;
 
 // --- STEP 5: Create Razorpay order ---
 $razorpayOrder = null;
@@ -65,29 +59,33 @@ try {
 $customer_name  = isset($_SESSION['username']) ? $_SESSION['username'] : "Customer";
 $customer_email = "unknown@example.com";
 
-if (!empty($_SESSION['user_id'])) {
-    // Prepare the statement using the PDO $conn object
-    $stmt = $conn->prepare("SELECT email FROM users WHERE id = ?");
+// Check if the DB connection object exists from db_connect.php
+if (isset($conn) && !empty($_SESSION['user_id'])) {
+    try {
+        $stmt = $conn->prepare("SELECT email FROM users WHERE id = ?");
+        $stmt->execute([$_SESSION['user_id']]); 
+        $user = $stmt->fetch();
 
-    // Execute the statement, passing parameters as an array
-    $stmt->execute([$_SESSION['user__id']]);
-
-    // Fetch the user data
-    $user = $stmt->fetch();
-
-    if ($user) {
-        $customer_email = $user['email'];
+        if ($user) {
+            $customer_email = $user['email'];
+        }
+    } catch (PDOException $e) {
+        // Handle potential DB error without crashing the page
+        $api_error = "Database Error: Could not fetch user details.";
     }
-} // <--- THIS is the curly brace that was likely missing.
+}
 
 // Close the connection by setting the object to null
 $conn = null;
+
+// --- THIS IS THE FIX: Close the PHP block before HTML starts ---
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Complete Your Order - <?php echo $service_name; ?></title>
+    <title>Complete Your Order - <?php echo htmlspecialchars($service_name); ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
     <style> body { font-family: "Poppins", sans-serif; } </style>
@@ -106,8 +104,8 @@ $conn = null;
             </div>
         <?php } else { ?>
             <div class="border-y border-gray-700 py-6 space-y-4">
-                <div class="flex justify-between items-center"><span class="text-gray-300 font-semibold">Service:</span><span class="text-lg font-bold"><?php echo $service_name; ?></span></div>
-                <div class="flex justify-between items-center"><span class="text-gray-300 font-semibold">Quantity:</span><span class="text-lg font-bold">x <?php echo $quantity; ?></span></div>
+                <div class="flex justify-between items-center"><span class="text-gray-300 font-semibold">Service:</span><span class="text-lg font-bold"><?php echo htmlspecialchars($service_name); ?></span></div>
+                <div class="flex justify-between items-center"><span class="text-gray-300 font-semibold">Quantity:</span><span class="text-lg font-bold">x <?php echo htmlspecialchars($quantity); ?></span></div>
                 <div class="flex justify-between items-center"><span class="text-gray-300 font-semibold">Amount to Pay:</span><span class="text-2xl font-bold text-cyan-400">₹<?php echo number_format($final_price, 2); ?></span></div>
             </div>
 
@@ -116,10 +114,10 @@ $conn = null;
                 <button id="rzp-button1" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-md transition-colors">Pay Online Securely</button>
                 <div class="flex items-center"><div class="flex-grow border-t border-gray-700"></div><span class="flex-shrink mx-4 text-gray-500">OR</span><div class="flex-grow border-t border-gray-700"></div></div>
                 <form action="place_order.php" method="POST">
-                    <input type="hidden" name="service_name" value="<?php echo $service_name; ?>">
-                    <input type="hidden" name="quantity" value="<?php echo $quantity; ?>">
-                    <input type="hidden" name="amount" value="<?php echo $final_price; ?>">
-                    <input type="hidden" name="customer_email" value="<?php echo $customer_email; ?>">
+                    <input type="hidden" name="service_name" value="<?php echo htmlspecialchars($service_name); ?>">
+                    <input type="hidden" name="quantity" value="<?php echo htmlspecialchars($quantity); ?>">
+                    <input type="hidden" name="amount" value="<?php echo htmlspecialchars($final_price); ?>">
+                    <input type="hidden" name="customer_email" value="<?php echo htmlspecialchars($customer_email); ?>">
                     <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-md transition-colors">Confirm Cash on Delivery</button>
                 </form>
             </div>
@@ -140,19 +138,30 @@ $conn = null;
             "amount": "<?php echo $amount_in_paise; ?>",
             "currency": "INR",
             "name": "Aparajita Computers",
-            "description": "Payment for <?php echo $quantity; ?> x <?php echo $service_name; ?>",
+            "description": "Payment for <?php echo htmlspecialchars($quantity); ?> x <?php echo htmlspecialchars($service_name); ?>",
             "order_id": "<?php echo $razorpayOrder['id']; ?>",
             "handler": function (response){
                 document.getElementById('razorpay_payment_id').value = response.razorpay_payment_id;
                 document.getElementById('razorpay_signature').value = response.razorpay_signature;
                 document.razorpayform.submit();
             },
-            "prefill": { "name": "<?php echo $customer_name; ?>", "email": "<?php echo $customer_email; ?>" },
-            "notes": { "service": "<?php echo $service_name; ?>", "quantity": "<?php echo $quantity; ?>" },
-            "theme": { "color": "#0891b2" }
+            "prefill": {
+                "name": "<?php echo htmlspecialchars($customer_name); ?>",
+                "email": "<?php echo htmlspecialchars($customer_email); ?>"
+            },
+            "notes": {
+                "service": "<?php echo htmlspecialchars($service_name); ?>",
+                "quantity": "<?php echo htmlspecialchars($quantity); ?>"
+            },
+            "theme": {
+                "color": "#0891b2"
+            }
         };
         var rzp1 = new Razorpay(options);
-        document.getElementById('rzp-button1').onclick = function(e){ rzp1.open(); e.preventDefault(); }
+        document.getElementById('rzp-button1').onclick = function(e){
+            rzp1.open();
+            e.preventDefault();
+        }
         </script>
     <?php } ?>
 </body>
