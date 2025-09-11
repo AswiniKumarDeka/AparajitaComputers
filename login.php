@@ -17,16 +17,15 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // 1. Validate inputs
 $email = $_POST['email'] ?? null;
 $password = $_POST['password'] ?? null;
-$role = $_POST['role'] ?? null;
 
-if (empty($email) || empty($password) || empty($role)) {
-    json_response(['success' => false, 'error' => 'All fields are required.']);
+if (empty($email) || empty($password)) {
+    json_response(['success' => false, 'error' => 'Email and password are required.']);
 }
 
-// 2. Fetch user from database based on email AND role
+// 2. Fetch user from database based on email
 try {
-    $stmt = $conn->prepare("SELECT id, name, password, role FROM users WHERE email = ? AND role = ? LIMIT 1");
-    $stmt->execute([$email, $role]);
+    $stmt = $conn->prepare("SELECT id, name, password, role FROM users WHERE email = ? LIMIT 1");
+    $stmt->execute([$email]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     // 3. Verify password and proceed
@@ -34,20 +33,23 @@ try {
         // --- LOGIN SUCCESS ---
         session_regenerate_id(true); // Prevent session fixation attacks
 
-        // ✅ Store consistent session variables
+        // ✅ Store session variables
         $_SESSION['user_id']   = $user['id'];
         $_SESSION['username']  = $user['name'];
-        $_SESSION['user_role'] = $user['role']; // ✅ matches admin_auth_check.php
+        $_SESSION['user_role'] = $user['role']; // will be "admin" or "user"
 
-        // Redirect URLs
-        $redirectUrl = ($user['role'] === 'admin') ? 'admin_dashboard.php' : 'login.html';
+        // ✅ Redirect based on role
+        if ($user['role'] === 'admin') {
+            $redirectUrl = 'admin_dashboard.php';
+        } else {
+            $redirectUrl = 'index.html'; // normal user goes to site homepage
+        }
 
-        // Send the redirect URL back to the JavaScript
         json_response(['success' => true, 'redirect' => $redirectUrl]);
 
     } else {
         // --- LOGIN FAILED ---
-        json_response(['success' => false, 'error' => 'Invalid email, password, or role.']);
+        json_response(['success' => false, 'error' => 'Invalid email or password.']);
     }
 
 } catch (PDOException $e) {
@@ -57,8 +59,6 @@ try {
 
 $conn = null;
 ?>
-
-
 
 
 // <?php
