@@ -1,52 +1,43 @@
 <?php
-session_start(); // ADD THIS LINE
+session_start();
 
-// Security Check: Ensure user is logged in
+// --- STEP 1: Error reporting (for debugging) ---
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
+// --- STEP 2: Security check ---
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.html?error=You must be logged in to make a payment.");
     exit;
 }
-// payment.php (Full-Featured, Secure, and Corrected Version)
 
-// --- STEP 1: Enhanced Error Reporting (for debugging) ---
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
-
-// session_start();
-
-// // --- STEP 2: CRUCIAL SECURITY CHECK ---
-// // This guard is at the very top. If the user is not logged in,
-// // the script stops here and redirects them. No other code will run.
-// if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
-//     header("Location: login.html?error=Please log in to place an order.");
-//     die("Redirecting to login page..."); 
-// }
-
-// --- If the script reaches this point, the user is confirmed to be logged in. ---
-
+// --- STEP 3: Include dependencies ---
 require 'db_connect.php'; 
 require 'razorpay-php/Razorpay.php'; 
 
 use Razorpay\Api\Api;
 use Razorpay\Api\Errors\BadRequestError;
 
-// --- Razorpay API Keys ---
-// IMPORTANT: You MUST replace these with your actual keys from Razorpay.
+// --- Razorpay API Keys (replace with your real keys) ---
 $keyId = 'rzp_test_BH9Fl1mKCz2rf8'; 
 $keySecret = '0ivx7uoRuO6zWgeqkBNPylai';
 
-// --- Get data from URL ---
+// --- STEP 4: Get data from URL safely ---
 $service_name = isset($_GET['service']) ? htmlspecialchars($_GET['service']) : 'Unknown Service';
-$base_price = isset($_GET['price']) ? floatval($_GET['price']) : 0.00;
-$quantity = isset($_GET['quantity']) ? intval($_GET['quantity']) : 1;
+$base_price   = isset($_GET['price']) ? floatval($_GET['price']) : 0.00;
+$quantity     = isset($_GET['quantity']) ? intval($_GET['quantity']) : 1;
 
-// --- Calculate Final Price ---
-$final_price = $base_price * $quantity;
-$amount_in_paise = $final_price * 100;
+if ($base_price <= 0 || $quantity <= 0) {
+    die("Invalid price or quantity.");
+}
 
-// --- STEP 3: Create Razorpay Order with Error Handling ---
+$final_price      = $base_price * $quantity;
+$amount_in_paise  = $final_price * 100;
+
+// --- STEP 5: Create Razorpay order ---
 $razorpayOrder = null;
-$api_error = null;
+$api_error     = null;
+
 try {
     $api = new Api($keyId, $keySecret);
     $orderData = [
@@ -59,23 +50,27 @@ try {
     $_SESSION['razorpay_order_id'] = $razorpayOrder['id'];
 
 } catch (BadRequestError $e) {
-    // This will catch the "Authentication failed" error gracefully
     $api_error = "Razorpay Error: " . $e->getMessage();
 } catch (Exception $e) {
-    $api_error = "An unexpected error occurred. Please contact support.";
+    $api_error = "Unexpected error: " . $e->getMessage();
 }
 
+// --- STEP 6: Fetch user details from DB ---
+$customer_name  = isset($_SESSION['username']) ? $_SESSION['username'] : "Customer";
+$customer_email = "unknown@example.com";
 
-// Get user details for prefill
-$customer_name = $_SESSION['username']; 
-$stmt = $conn->prepare("SELECT email FROM users WHERE id = ?");
-$stmt->bind_param("i", $_SESSION['id']);
-$stmt->execute();
-$user = $stmt->get_result()->fetch_assoc();
-$customer_email = $user['email'];
-$stmt->close();
+if (!empty($_SESSION['user_id'])) {
+    $stmt = $conn->prepare("SELECT email FROM users WHERE id = ?");
+    $stmt->bind_param("i", $_SESSION['user_id']);
+    $stmt->execute();
+    $user = $stmt->get_result()->fetch_assoc();
+    if ($user) {
+        $customer_email = $user['email'];
+    }
+    $stmt->close();
+}
+
 $conn->close();
-
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -94,14 +89,12 @@ $conn->close();
         </div>
 
         <?php if ($api_error): ?>
-            <!-- Display a clear error message if Razorpay connection failed -->
             <div class="p-4 bg-red-500/20 text-red-400 rounded-md text-center">
                 <h3 class="font-bold">Payment System Error!</h3>
                 <p><?php echo htmlspecialchars($api_error); ?></p>
                 <p class="mt-2 text-sm">Please check your API keys or contact support.</p>
             </div>
         <?php else: ?>
-            <!-- Show payment options only if there was no error -->
             <div class="border-y border-gray-700 py-6 space-y-4">
                 <div class="flex justify-between items-center"><span class="text-gray-300 font-semibold">Service:</span><span class="text-lg font-bold"><?php echo $service_name; ?></span></div>
                 <div class="flex justify-between items-center"><span class="text-gray-300 font-semibold">Quantity:</span><span class="text-lg font-bold">x <?php echo $quantity; ?></span></div>
@@ -126,32 +119,8 @@ $conn->close();
     </div>
 
     <?php if (!$api_error && $razorpayOrder): ?>
-        <!-- Only include Razorpay scripts if the order was created successfully -->
         <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
         <form name='razorpayform' action="verify_payment.php" method="POST">
-            <input type="hidden" name="razorpay_payment_id" id="razorpay_payment_id">
-            <input type="hidden" name="razorpay_signature"  id="razorpay_signature">
-        </form>
-        <script>
-        var options = {
-            "key": "<?php echo $keyId; ?>",
-            "amount": "<?php echo $amount_in_paise; ?>",
-            "currency": "INR",
-            "name": "Aparajita Computers",
-            "description": "Payment for <?php echo $quantity; ?> x <?php echo $service_name; ?>",
-            "order_id": "<?php echo $razorpayOrder['id']; ?>",
-            "handler": function (response){
-                document.getElementById('razorpay_payment_id').value = response.razorpay_payment_id;
-                document.getElementById('razorpay_signature').value = response.razorpay_signature;
-                document.razorpayform.submit();
-            },
-            "prefill": { "name": "<?php echo $customer_name; ?>", "email": "<?php echo $customer_email; ?>" },
-            "notes": { "service": "<?php echo $service_name; ?>", "quantity": "<?php echo $quantity; ?>" },
-            "theme": { "color": "#0891b2" }
-        };
-        var rzp1 = new Razorpay(options);
-        document.getElementById('rzp-button1').onclick = function(e){ rzp1.open(); e.preventDefault(); }
-        </script>
-    <?php endif; ?>
-</body>
-</html>
+            <input type="hidden" name="razo
+
+    
