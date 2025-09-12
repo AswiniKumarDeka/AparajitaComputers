@@ -11,22 +11,30 @@
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #1f2937; }
         ::-webkit-scrollbar-thumb { background: #0891b2; border-radius: 10px; }
-        .slide { transition: opacity 1s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
         .fade-in-down { animation: fadeInDown 1s ease-out forwards; }
-        #mobile-menu { transition: transform 0.3s ease-in-out; }
         .star-rating input { display: none; }
         .star-rating label { font-size: 2rem; color: #4b5563; cursor: pointer; transition: color 0.2s; }
         .star-rating input:checked ~ label, .star-rating label:hover, .star-rating label:hover ~ label { color: #f59e0b; }
-        /* Animation for the modal */
         .modal-fade-enter { transition: opacity 0.3s ease-out, transform 0.3s ease-out; }
         .modal-fade-enter-from { opacity: 0; transform: scale(0.95); }
         .modal-fade-enter-to { opacity: 1; transform: scale(1); }
+        .slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+            animation: fadeIn 1.5s forwards;
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-white">
     <!-- =========== START: MAINTENANCE POPUP =========== -->
-    <div id="maintenance-modal" class="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 hidden modal-fade-enter modal-fade-enter-from">
+    <div id="maintenance-modal" class="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-[60] hidden modal-fade-enter modal-fade-enter-from">
         <div class="bg-gray-800 border border-red-500/30 w-full max-w-lg p-6 sm:p-8 rounded-2xl shadow-2xl space-y-4 text-center">
             <div class="flex justify-center">
                  <svg class="w-16 h-16 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
@@ -44,48 +52,37 @@
     <!-- =========== END: MAINTENANCE POPUP =========== -->
 
     <header class="bg-gray-800/80 backdrop-blur-sm sticky top-0 z-50">
-        <!-- Navigation -->
         <nav class="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
             <a href="index.html" class="text-2xl font-bold text-cyan-400">অপৰাজিতা কম্পিউটাৰচ</a>
-            <div class="hidden md:flex space-x-6 items-center">
-                <a href="#home" class="hover:text-cyan-400 transition-colors">Home</a>
-                <a href="#services" id="nav-services-link" class="hover:text-cyan-400 transition-colors hidden">Services</a>
-                <a href="track_order.html" class="hover:text-cyan-400 transition-colors">Track Order</a>
-                <a href="#reviews" class="hover:text-cyan-400 transition-colors">Reviews</a>
-                <a href="#pricing" class="hover:text-cyan-400 transition-colors">Pricing</a>
-                <a href="#location" class="hover:text-cyan-400 transition-colors">Location</a>
-                <a href="#contact" class="hover:text-cyan-400 transition-colors">Contact</a>
-                <div id="nav-logged-out" class="flex space-x-6 items-center">
-                    <a href="login.html" class="hover:text-cyan-400 transition-colors">Login</a>
-                    <a href="register.html" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Register</a>
-                </div>
-                <div id="nav-logged-in" class="hidden flex space-x-4 items-center">
-                    <span id="welcome-message" class="text-gray-300"></span>
-                    <a id="admin-panel-link" href="admin_dashboard.php" class="hidden hover:text-yellow-400 transition-colors font-bold">Admin Panel</a>
-                    <a href="my_files.php" class="hover:text-cyan-400 transition-colors">My Files</a>
-                    <a href="#upload" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Upload New File</a>
-                    <a href="logout.php" class="hover:text-cyan-400 transition-colors">Logout</a>
-                </div>
+            <div class="hidden md:flex space-x-6 items-center" id="desktop-nav-links">
+                <!-- Desktop links will be populated by JS -->
             </div>
             <div class="md:hidden">
-                <button id="menu-btn" class="text-white focus:outline-none z-50 relative">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                <button id="menu-btn" class="text-white focus:outline-none z-[51] relative">
+                    <!-- Hamburger/Close Icon -->
+                    <svg id="menu-open-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                    <svg id="menu-close-icon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
         </nav>
-        <div id="mobile-menu" class="fixed top-0 right-0 h-full w-64 bg-gray-800 shadow-lg transform translate-x-full md:hidden p-8 space-y-4 z-40"></div>
     </header>
+    
+    <!-- Mobile Menu -->
+    <div id="mobile-menu-overlay" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden"></div>
+    <div id="mobile-menu" class="fixed top-0 right-0 h-full w-64 bg-gray-800 shadow-lg transform translate-x-full transition-transform duration-300 ease-in-out md:hidden p-8 pt-20 space-y-4 z-40">
+        <!-- Mobile links will be populated by JS -->
+    </div>
 
     <main>
         <!-- HERO SECTION -->
         <section id="home" class="relative h-[calc(100vh-4rem)]">
-            <div id="slideshow-container" class="absolute inset-0"></div>
+            <div id="slideshow-container" class="absolute inset-0 overflow-hidden"></div>
             <div class="absolute inset-0 bg-black/60"></div>
             <div class="relative h-full flex items-center justify-center text-center z-10 px-4">
                 <div>
                     <h1 class="text-4xl md:text-6xl font-bold mb-4 fade-in-down">Your One-Stop Digital & Print Shop</h1>
                     <p class="text-lg md:text-xl text-gray-300 mb-8 max-w-2xl mx-auto fade-in-down" style="animation-delay: 0.3s;">From online form submissions to high-quality photo printing, we handle all your needs with speed and care.</p>
-                    <a href="login.html" id="hero-cta-btn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition-colors fade-in-down" style="animation-delay: 0.6s;">Login to View Services</a>
+                    <a href="login.html" id="hero-cta-btn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition-transform hover:scale-105 duration-300 fade-in-down" style="animation-delay: 0.6s;">Login to View Services</a>
                 </div>
             </div>
         </section>
@@ -103,17 +100,8 @@
             </div>
         </section>
 
-        <!-- CUSTOMER REVIEWS SECTION (Visible by default) -->
-        <section id="reviews" class="py-20 bg-gray-800">
-            <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                <h2 class="text-3xl md:text-4xl font-bold mb-12">What Our Customers Say</h2>
-                <div id="reviews-container" class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto"></div>
-                <div id="review-form-container" class="hidden max-w-xl mx-auto mt-16 text-left"></div>
-            </div>
-        </section>
-
         <!-- PRICING SECTION -->
-        <section id="pricing" class="py-20 bg-gray-900">
+        <section id="pricing" class="py-20 bg-gray-800">
             <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
                 <h2 class="text-3xl md:text-4xl font-bold mb-2">Simple & Transparent Pricing</h2>
                 <p class="text-gray-400 mb-12 max-w-xl mx-auto">No hidden fees. Get the best rates for top-quality services.</p>
@@ -140,19 +128,6 @@
             </div>
         </section>
 
-        <!-- LOCATION SECTION -->
-        <section id="location" class="py-20 bg-gray-800">
-            <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                <h2 class="text-3xl md:text-4xl font-bold mb-12">Find Us Here</h2>
-                <div class="bg-gray-700 rounded-lg shadow-xl overflow-hidden">
-                    <iframe 
-                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3574.805566395351!2d92.0949646742045!3d26.36531998495147!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x375a59a9a9a9a9a9%3A0x3b3b3b3b3b3b3b3b!2sBalipota%2C%20Darrang%2C%20Assam!5e0!3m2!1sen!2sin!4v1678886400000" 
-                        width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade">
-                    </iframe>
-                </div>
-            </div>
-        </section>
-        
         <!-- UPLOAD SECTION (Hidden by default) -->
         <section id="upload" class="py-20 bg-gray-900 hidden">
             <div class="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -173,6 +148,28 @@
             </div>
         </section>
 
+        <!-- CUSTOMER REVIEWS SECTION -->
+        <section id="reviews" class="py-20 bg-gray-900">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="text-3xl md:text-4xl font-bold mb-12">What Our Customers Say</h2>
+                <div id="reviews-container" class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto"></div>
+                <div id="review-form-container" class="hidden max-w-xl mx-auto mt-16 text-left"></div>
+            </div>
+        </section>
+
+        <!-- LOCATION SECTION -->
+        <section id="location" class="py-20 bg-gray-800">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="text-3xl md:text-4xl font-bold mb-12">Find Us Here</h2>
+                <div class="bg-gray-700 rounded-lg shadow-xl overflow-hidden">
+                    <iframe 
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3574.805566395351!2d92.0949646742045!3d26.36531998495147!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x375a59a9a9a9a9a9%3A0x3b3b3b3b3b3b3b3b!2sBalipota%2C%20Darrang%2C%20Assam!5e0!3m2!1sen!2sin!4v1678886400000" 
+                        width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade">
+                    </iframe>
+                </div>
+            </div>
+        </section>
+        
     </main>
 
     <footer id="contact" class="bg-gray-800 border-t border-gray-700">
@@ -189,29 +186,72 @@
     </footer>
 
     <script>
-      document.addEventListener('DOMContentLoaded', async () => {
+    document.addEventListener('DOMContentLoaded', async () => {
         const modal = document.getElementById('maintenance-modal');
         const closeModalBtn = document.getElementById('close-modal-btn');
 
         const closeModal = () => {
             modal.classList.remove('modal-fade-enter-to');
             modal.classList.add('modal-fade-enter-from');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300);
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
         };
-
         closeModalBtn.addEventListener('click', closeModal);
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                closeModal();
-            }
-        });
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
         const baseUrl = '.'; 
-        let isUserLoggedIn = false;
+        const escapeHTML = str => str ? str.replace(/[&<>"']/g, tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[tag])) : '';
 
-        const escapeHTML = str => str.replace(/[&<>"']/g, tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[tag]));
+        // --- START: MOBILE MENU & SLIDESHOW LOGIC ---
+        const menuBtn = document.getElementById('menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+        const menuOpenIcon = document.getElementById('menu-open-icon');
+        const menuCloseIcon = document.getElementById('menu-close-icon');
+
+        const toggleMenu = () => {
+            const isOpen = mobileMenu.classList.contains('translate-x-0');
+            mobileMenu.classList.toggle('translate-x-full', isOpen);
+            mobileMenu.classList.toggle('translate-x-0', !isOpen);
+            mobileMenuOverlay.classList.toggle('hidden', isOpen);
+            menuOpenIcon.classList.toggle('hidden', !isOpen);
+            menuCloseIcon.classList.toggle('hidden', isOpen);
+        };
+
+        menuBtn.addEventListener('click', toggleMenu);
+        mobileMenuOverlay.addEventListener('click', toggleMenu);
+
+        // const slideshowContainer = document.getElementById('slideshow-container');
+        // const images = [
+        //     'https://placehold.co/1920x1080/000000/FFFFFF?text=High+Quality+Printing',
+        //     'https://placehold.co/1920x1080/111827/FFFFFF?text=Secure+Online+Forms',
+        //     'https://placehold.co/1920x1080/1f2937/FFFFFF?text=Official+Documents',
+        // ];
+        // let currentImageIndex = 0;
+
+        // const showNextImage = () => {
+        //     const oldSlide = slideshowContainer.querySelector('.slide');
+        //     if(oldSlide) oldSlide.style.opacity = 0;
+            
+        //     currentImageIndex = (currentImageIndex + 1) % images.length;
+        //     const newSlide = document.createElement('div');
+        //     newSlide.className = 'slide';
+        //     newSlide.style.backgroundImage = `url('${images[currentImageIndex]}')`;
+            
+        //     setTimeout(() => {
+        //         if(oldSlide) slideshowContainer.removeChild(oldSlide);
+        //         slideshowContainer.appendChild(newSlide);
+        //         newSlide.style.opacity = 1;
+        //     }, 1500);
+        // };
+        // // Preload first image
+        // const firstSlide = document.createElement('div');
+        // firstSlide.className = 'slide';
+        // firstSlide.style.backgroundImage = `url('${images[0]}')`;
+        // slideshowContainer.appendChild(firstSlide);
+        // firstSlide.style.opacity = 1;
+        // setInterval(showNextImage, 5000); // Change image every 5 seconds
+        // // --- END: MOBILE MENU & SLIDESHOW LOGIC ---
+
 
         const services = [
             { id: 1, name: 'Online Form Submission', description: 'Job applications, government schemes, exams, and more.', price: 100, icon: '<svg class="w-12 h-12 mx-auto mb-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>' },
@@ -228,81 +268,59 @@
         const renderServices = (filteredServices) => {
             serviceCardsContainer.innerHTML = '';
             noServicesFound.classList.toggle('hidden', filteredServices.length > 0);
-
             filteredServices.forEach(service => {
                 const card = document.createElement('div');
                 card.className = 'service-card bg-gray-800 p-8 rounded-lg shadow-lg transform hover:-translate-y-2 transition-transform duration-300 flex flex-col justify-between';
                 card.dataset.name = service.name;
                 card.dataset.description = service.description;
                 card.dataset.price = service.price;
-
                 card.innerHTML = `
-                        <div>
-                            ${service.icon}
-                            <h3 class="text-xl font-bold mb-2">${service.name}</h3>
-                            <p class="text-gray-400">${service.description}</p>
+                    <div>
+                        ${service.icon}
+                        <h3 class="text-xl font-bold mb-2">${service.name}</h3>
+                        <p class="text-gray-400">${service.description}</p>
+                    </div>
+                    <div class="mt-6">
+                        <div class="flex items-center justify-center space-x-4 mb-4">
+                            <button class="quantity-btn minus-btn bg-gray-700 hover:bg-gray-600 w-8 h-8 rounded-full font-bold text-lg" aria-label="Decrease quantity">-</button>
+                            <span class="quantity-value text-xl font-bold">1</span>
+                            <button class="quantity-btn plus-btn bg-gray-700 hover:bg-gray-600 w-8 h-8 rounded-full font-bold text-lg" aria-label="Increase quantity">+</button>
                         </div>
-                        <div class="mt-6">
-                            <div class="flex items-center justify-center space-x-4 mb-4">
-                                <button class="quantity-btn minus-btn bg-gray-700 hover:bg-gray-600 w-8 h-8 rounded-full font-bold text-lg" aria-label="Decrease quantity">-</button>
-                                <span class="quantity-value text-xl font-bold">1</span>
-                                <button class="quantity-btn plus-btn bg-gray-700 hover:bg-gray-600 w-8 h-8 rounded-full font-bold text-lg" aria-label="Increase quantity">+</button>
-                            </div>
-                            <button class="order-btn bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-md transition-colors w-full block">
-                                Order Now (₹${service.price})
-                            </button>
-                        </div>
-                `;
+                        <button class="order-btn bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-md transition-colors w-full block">
+                            Order Now (₹${service.price})
+                        </button>
+                    </div>`;
                 serviceCardsContainer.appendChild(card);
             });
         };
-
         searchInput.addEventListener('input', (e) => {
             const searchTerm = e.target.value.toLowerCase();
-            const filtered = services.filter(service => 
-                service.name.toLowerCase().includes(searchTerm) || 
-                service.description.toLowerCase().includes(searchTerm)
-            );
+            const filtered = services.filter(s => s.name.toLowerCase().includes(searchTerm) || s.description.toLowerCase().includes(searchTerm));
             renderServices(filtered);
         });
-
         serviceCardsContainer.addEventListener('click', (e) => {
             const target = e.target;
             const card = target.closest('.service-card');
-
-            if (target.classList.contains('quantity-btn')) {
+            if (!card) return;
+            if (target.matches('.quantity-btn')) {
                 const quantitySpan = card.querySelector('.quantity-value');
                 const orderBtn = card.querySelector('.order-btn');
                 const basePrice = parseFloat(card.dataset.price);
                 let quantity = parseInt(quantitySpan.textContent);
-
-                if (target.classList.contains('plus-btn')) {
-                    quantity++;
-                } else if (target.classList.contains('minus-btn') && quantity > 1) {
-                    quantity--;
-                }
-
-                const totalPrice = basePrice * quantity;
+                if (target.matches('.plus-btn')) quantity++;
+                else if (target.matches('.minus-btn') && quantity > 1) quantity--;
                 quantitySpan.textContent = quantity;
-                orderBtn.textContent = `Order Now (₹${totalPrice})`;
+                orderBtn.textContent = `Order Now (₹${basePrice * quantity})`;
             }
-
-            if (target.classList.contains('order-btn')) {
-                if (isUserLoggedIn) {
-                    const serviceName = card.dataset.name;
-                    const basePrice = parseFloat(card.dataset.price);
-                    const quantity = parseInt(card.querySelector('.quantity-value').textContent);
-                    const paymentUrl = `payment.php?service=${encodeURIComponent(serviceName)}&price=${basePrice}&quantity=${quantity}`;
-                    window.location.href = paymentUrl;
-                } else {
-                    const loginUrl = `login.html?error=${encodeURIComponent('You must log in to place an order.')}`;
-                    window.location.href = loginUrl;
-                }
+            if (target.matches('.order-btn')) {
+                const serviceName = card.dataset.name;
+                const basePrice = parseFloat(card.dataset.price);
+                const quantity = parseInt(card.querySelector('.quantity-value').textContent);
+                const paymentUrl = `payment.php?service=${encodeURIComponent(serviceName)}&price=${basePrice}&quantity=${quantity}`;
+                window.location.href = paymentUrl;
             }
         });
-
-        renderServices(services);
-
+        
         const reviewsContainer = document.getElementById('reviews-container');
         const reviewFormContainer = document.getElementById('review-form-container');
 
@@ -316,12 +334,9 @@
                         const reviewCard = document.createElement('div');
                         reviewCard.className = 'bg-gray-700 p-6 rounded-lg text-left';
                         reviewCard.innerHTML = `
-                            <div class="flex items-center mb-2 text-amber-400">
-                                ${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}
-                            </div>
+                            <div class="flex items-center mb-2 text-amber-400">${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</div>
                             <p class="text-gray-300 italic">"${escapeHTML(review.review_text)}"</p>
-                            <p class="text-cyan-400 font-bold mt-4">- ${escapeHTML(review.username)}</p>
-                        `;
+                            <p class="text-cyan-400 font-bold mt-4">- ${escapeHTML(review.username)}</p>`;
                         reviewsContainer.appendChild(reviewCard);
                     });
                 } else {
@@ -329,26 +344,25 @@
                 }
             } catch (error) {
                 console.error("Could not load reviews:", error);
-                reviewsContainer.innerHTML = `<p class="text-red-400 col-span-full">Error loading reviews. Check the console for details.</p>`;
+                reviewsContainer.innerHTML = `<p class="text-red-400 col-span-full">Error loading reviews.</p>`;
             }
         };
 
         const handleReviewSubmit = async (e) => {
             e.preventDefault();
             const form = e.target;
-            const reviewResponseMessage = form.querySelector('#reviewResponseMessage');
+            const msgDiv = form.querySelector('#reviewResponseMessage');
             const formData = new FormData(form);
-            reviewResponseMessage.textContent = 'Submitting...';
-
+            msgDiv.textContent = 'Submitting...';
             try {
                 const response = await fetch(`${baseUrl}/submit_review.php`, { method: 'POST', body: formData });
                 const data = await response.json();
                 if(data.error) {
-                    reviewResponseMessage.className = 'text-red-400 text-center';
-                    reviewResponseMessage.textContent = data.error;
+                    msgDiv.className = 'text-red-400 text-center';
+                    msgDiv.textContent = data.error;
                 } else {
-                    reviewResponseMessage.className = 'text-green-400 text-center';
-                    reviewResponseMessage.textContent = data.success;
+                    msgDiv.className = 'text-green-400 text-center';
+                    msgDiv.textContent = data.success;
                     form.reset();
                     setTimeout(() => {
                         reviewFormContainer.innerHTML = `<div class="text-center p-8 bg-gray-700 rounded-lg"><p class="text-lg text-green-400">Thank you! Your review is pending approval.</p></div>`;
@@ -357,34 +371,46 @@
                 }
             } catch (error) {
                 console.error("Error submitting review:", error);
-                reviewResponseMessage.textContent = "An unexpected error occurred.";
+                msgDiv.textContent = "An unexpected error occurred.";
             }
         };
 
         const updateUIForSession = async (session) => {
-            const navLoggedOut = document.getElementById('nav-logged-out');
-            const navLoggedIn = document.getElementById('nav-logged-in');
-            const welcomeMessage = document.getElementById('welcome-message');
-            const servicesSection = document.getElementById('services');
-            const navServicesLink = document.getElementById('nav-services-link');
+            const desktopNav = document.getElementById('desktop-nav-links');
             const heroCtaBtn = document.getElementById('hero-cta-btn');
-            const uploadSection = document.getElementById('upload');
-            const uploadCustomerName = document.getElementById('upload-customer-name');
-            const uploadCustomerEmail = document.getElementById('upload-customer-email');
-            const adminPanelLink = document.getElementById('admin-panel-link');
+            const sections = {
+                services: document.getElementById('services'),
+                upload: document.getElementById('upload'),
+                reviewForm: document.getElementById('review-form-container'),
+            };
+            const uploadFields = {
+                name: document.getElementById('upload-customer-name'),
+                email: document.getElementById('upload-customer-email'),
+            };
+
+            let desktopLinksHTML = `
+                <a href="#home" class="hover:text-cyan-400 transition-colors">Home</a>
+                <a href="#pricing" class="hover:text-cyan-400 transition-colors">Pricing</a>
+                <a href="#reviews" class="hover:text-cyan-400 transition-colors">Reviews</a>
+                <a href="#location" class="hover:text-cyan-400 transition-colors">Location</a>
+                <a href="#contact" class="hover:text-cyan-400 transition-colors">Contact</a>`;
+            let mobileLinksHTML = desktopLinksHTML;
 
             if (session.loggedin) {
-                isUserLoggedIn = true;
-                navLoggedOut.classList.add('hidden');
-                navLoggedIn.classList.remove('hidden');
-                welcomeMessage.textContent = `Welcome, ${escapeHTML(session.username)}!`;
+                const commonLoggedInLinks = `
+                    <a href="#services" class="hover:text-cyan-400 transition-colors">Services</a>
+                    <a href="my_files.php" class="hover:text-cyan-400 transition-colors">My Files</a>
+                    <a href="#upload" class="hover:text-cyan-400 transition-colors">Upload</a>
+                    <a href="track_order.html" class="hover:text-cyan-400 transition-colors">Track Order</a>`;
+                
+                desktopLinksHTML += commonLoggedInLinks;
+                mobileLinksHTML += commonLoggedInLinks;
 
-                // Handle UI based on role
                 if (session.role === 'admin') {
-                    adminPanelLink.classList.remove('hidden');
+                    desktopLinksHTML += `<a href="admin_dashboard.php" class="hover:text-yellow-400 transition-colors font-bold">Admin Panel</a>`;
+                    mobileLinksHTML += `<a href="admin_dashboard.php" class="hover:text-yellow-400 transition-colors font-bold">Admin Panel</a>`;
                 } else {
-                    // This is a regular 'user'
-                    adminPanelLink.classList.add('hidden');
+                    // Show modal for regular users
                     const modal = document.getElementById('maintenance-modal');
                     modal.classList.remove('hidden');
                     setTimeout(() => {
@@ -392,22 +418,29 @@
                         modal.classList.add('modal-fade-enter-to');
                     }, 10);
                 }
+
+                desktopLinksHTML += `
+                    <div class="flex space-x-4 items-center">
+                        <span class="text-gray-300">Welcome, ${escapeHTML(session.username)}!</span>
+                        <a href="logout.php" class="hover:text-cyan-400 transition-colors">Logout</a>
+                    </div>`;
+                mobileLinksHTML += `<a href="logout.php" class="hover:text-cyan-400 transition-colors">Logout</a>`;
                 
-                servicesSection.classList.remove('hidden');
-                navServicesLink.classList.remove('hidden');
                 heroCtaBtn.textContent = 'Browse Services';
                 heroCtaBtn.href = '#services';
-                uploadSection.classList.remove('hidden');
+                sections.services.classList.remove('hidden');
+                sections.upload.classList.remove('hidden');
+                if(uploadFields.name) uploadFields.name.value = session.username;
+                if(uploadFields.email) uploadFields.email.value = session.email;
 
-                if(uploadCustomerName) uploadCustomerName.value = session.username;
-                
+                // Handle review form visibility
                 try {
                     const reviewResponse = await fetch(`${baseUrl}/check_review_status.php`);
                     const reviewStatus = await reviewResponse.json();
                     if (reviewStatus.has_reviewed) {
-                        reviewFormContainer.innerHTML = `<div class="text-center p-8 bg-gray-700 rounded-lg"><p class="text-lg text-green-400">Thank you for your review!</p></div>`;
+                        sections.reviewForm.innerHTML = `<div class="text-center p-8 bg-gray-700 rounded-lg"><p class="text-lg text-green-400">Thank you for your review!</p></div>`;
                     } else {
-                        reviewFormContainer.innerHTML = `
+                        sections.reviewForm.innerHTML = `
                             <h3 class="text-2xl font-bold mb-4 text-center">Leave a Review</h3>
                             <form id="reviewForm" class="bg-gray-700 p-8 rounded-lg space-y-4">
                                 <div class="star-rating flex flex-row-reverse justify-center">
@@ -417,34 +450,35 @@
                                     <input type="radio" id="star2" name="rating" value="2" /><label for="star2" title="2 stars">☆</label>
                                     <input type="radio" id="star1" name="rating" value="1" /><label for="star1" title="1 star">☆</label>
                                 </div>
-                                <div>
-                                    <textarea name="review_text" placeholder="Share your experience..." rows="4" required class="w-full p-3 bg-gray-600 rounded-md border border-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"></textarea>
-                                </div>
+                                <div><textarea name="review_text" placeholder="Share your experience..." rows="4" required class="w-full p-3 bg-gray-600 rounded-md border border-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"></textarea></div>
                                 <button type="submit" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-6 rounded-md transition-colors">Submit Review</button>
                                 <div id="reviewResponseMessage" class="mt-4 text-center text-lg"></div>
-                            </form>
-                        `;
-                        reviewFormContainer.addEventListener('submit', (e) => {
-                            if (e.target.id === 'reviewForm') {
-                                handleReviewSubmit(e);
-                            }
-                        });
+                            </form>`;
+                        sections.reviewForm.addEventListener('submit', (e) => { if (e.target.id === 'reviewForm') handleReviewSubmit(e); });
                     }
-                    reviewFormContainer.classList.remove('hidden');
-                } catch (error) {
-                    console.error("Could not check review status:", error);
-                }
+                    sections.reviewForm.classList.remove('hidden');
+                } catch (error) { console.error("Could not check review status:", error); }
+                
             } else {
-                isUserLoggedIn = false;
-                navLoggedOut.classList.remove('hidden');
-                navLoggedIn.classList.add('hidden');
-                servicesSection.classList.add('hidden');
-                navServicesLink.classList.add('hidden');
-                reviewFormContainer.classList.add('hidden');
+                desktopLinksHTML += `
+                    <div class="flex space-x-6 items-center">
+                        <a href="login.html" class="hover:text-cyan-400 transition-colors">Login</a>
+                        <a href="register.html" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Register</a>
+                    </div>`;
+                mobileLinksHTML += `
+                    <a href="login.html" class="hover:text-cyan-400 transition-colors">Login</a>
+                    <a href="register.html" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Register</a>`;
+                
                 heroCtaBtn.textContent = 'Login to View Services';
                 heroCtaBtn.href = 'login.html';
-                uploadSection.classList.add('hidden');
+                sections.services.classList.add('hidden');
+                sections.upload.classList.add('hidden');
+                sections.reviewForm.classList.add('hidden');
             }
+            
+            desktopNav.innerHTML = desktopLinksHTML;
+            mobileMenu.innerHTML = mobileLinksHTML.replaceAll('class="', 'class="block py-2 text-lg ');
+            mobileMenu.querySelectorAll('a').forEach(link => link.addEventListener('click', toggleMenu));
         };
 
         try {
@@ -452,15 +486,19 @@
             const sessionData = await sessionResponse.json();
             await updateUIForSession(sessionData);
             await fetchReviews();
+            renderServices(services);
         } catch (error) {
             console.error("Initialization failed:", error);
             await updateUIForSession({ loggedin: false });
             await fetchReviews();
+            renderServices(services);
         }
       });
     </script>
 </body>
 </html>
+
+
 
 
 
@@ -496,7 +534,13 @@
 </head>
 <body class="bg-gray-900 text-white">
     <header class="bg-gray-800/80 backdrop-blur-sm sticky top-0 z-50">
-      <!-- Navigation -->
+<!--       Navigation  -->
+<!-- 
+
+
+
+
+
       <nav class="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
         <a href="index.html" class="text-2xl font-bold text-cyan-400">অপৰাজিতা কম্পিউটাৰচ</a>
         <div class="hidden md:flex space-x-6 items-center">
@@ -530,6 +574,11 @@
 
     <main>
       <!-- HERO SECTION -->
+
+
+<!-- 
+
+
       <section id="home" class="relative h-[calc(100vh-4rem)]">
         <div id="slideshow-container" class="absolute inset-0"></div>
         <div class="absolute inset-0 bg-black/60"></div>
@@ -542,7 +591,12 @@
         </div>
       </section>
 
-      <!-- SERVICES SECTION (Hidden by default) -->
+      <!-- SERVICES SECTION (Hidden by default) 
+
+
+
+
+
       <section id="services" class="py-20 bg-gray-900 hidden">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 class="text-3xl md:text-4xl font-bold mb-2">Our Services</h2>
@@ -555,7 +609,11 @@
         </div>
       </section>
 
-      <!-- CUSTOMER REVIEWS SECTION (Visible by default) -->
+      <!-- CUSTOMER REVIEWS SECTION (Visible by default) 
+
+
+
+
       <section id="reviews" class="py-20 bg-gray-800">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 class="text-3xl md:text-4xl font-bold mb-12">What Our Customers Say</h2>
@@ -564,7 +622,11 @@
         </div>
       </section>
 
-      <!-- PRICING SECTION -->
+      <!-- PRICING SECTION -
+
+
+
+
       <section id="pricing" class="py-20 bg-gray-900">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 class="text-3xl md:text-4xl font-bold mb-2">Simple & Transparent Pricing</h2>
@@ -592,7 +654,9 @@
         </div>
       </section>
 
-      <!-- LOCATION SECTION -->
+      <!-- LOCATION SECTION 
+
+
       <section id="location" class="py-20 bg-gray-800">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 class="text-3xl md:text-4xl font-bold mb-12">Find Us Here</h2>
@@ -605,7 +669,11 @@
         </div>
       </section>
       
-      <!-- UPLOAD SECTION (Hidden by default) -->
+      <!-- UPLOAD SECTION (Hidden by default) 
+
+
+
+
       <section id="upload" class="py-20 bg-gray-900 hidden">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
           <div class="bg-gray-800 rounded-lg shadow-xl p-8 md:p-12">
@@ -880,5 +948,4 @@
       });
     </script>
 </body>
-</html>
- -->
+ </html>  -->
