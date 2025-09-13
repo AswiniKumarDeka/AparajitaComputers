@@ -2,13 +2,18 @@
 session_start();
 require 'db_connect.php';
 
+// --- CORRECTED: All 'require' and 'use' statements must be at the top-level scope ---
+require 'razorpay-php/Razorpay.php';
+use Razorpay\Api\Api;
+use Razorpay\Api\Errors\BadRequestError;
+
 // --- Security Check ---
 if (empty($_SESSION['user_id'])) {
     header("Location: login.html?error=Session+expired.+Please+login+again.");
     exit;
 }
 
-// --- Validate Request ---
+// --- Validate Request Method ---
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     header("Location: index.html");
     exit;
@@ -23,7 +28,7 @@ $customer_email = filter_var($_POST['customer_email'] ?? '', FILTER_VALIDATE_EMA
 $instructions = trim($_POST['instructions'] ?? "");
 $payment_method = $_POST['payment_method'] ?? 'cod';
 
-// --- Basic Validation ---
+// --- Basic Data Validation ---
 if ($quantity <= 0 || $amount <= 0 || !$customer_email) {
     header("Location: index.html?error=Invalid+order+details.");
     exit;
@@ -31,8 +36,6 @@ if ($quantity <= 0 || $amount <= 0 || !$customer_email) {
 
 // --- Generate a unique Order ID ---
 $order_id = 'AC-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), 7, 6));
-
-// --- Route to the Correct Payment Handler ---
 
 // ===================================================================
 //  HANDLER 1: CASH ON DELIVERY (COD)
@@ -46,7 +49,7 @@ if ($payment_method === 'cod') {
         $stmt = $conn->prepare($sql);
         $stmt->execute([$user_id, $order_id, $service_name, $quantity, $instructions, $amount]);
 
-        // You can add your email sending logic here if you wish
+        // (Optional) Add your email sending logic here.
 
         // Redirect to a success page
         header("Location: success.html?type=cod&order_id={$order_id}");
@@ -63,9 +66,6 @@ if ($payment_method === 'cod') {
 //  HANDLER 2: RAZORPAY ONLINE PAYMENT
 // ===================================================================
 elseif ($payment_method === 'razorpay') {
-    require 'razorpay-php/Razorpay.php';
-    use Razorpay\Api\Api;
-
     $keyId = 'rzp_test_BH9Fl1mKCz2rf8'; // Replace with your Key ID
     $keySecret = '0ivx7uoRuO6zWgeqkBNPylai'; // Replace with your Key Secret
 
@@ -84,14 +84,14 @@ elseif ($payment_method === 'razorpay') {
         $razorpayOrderId = $razorpayOrder['id'];
         $_SESSION['razorpay_order_id'] = $razorpayOrderId;
 
-        // Store the pending order in our database BEFORE payment
+        // Store the pending order in our database BEFORE sending the user to pay
         $sql = "INSERT INTO payments 
                 (user_id, order_id, razorpay_order_id, service_name, quantity, instructions, amount, payment_method, payment_status) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, 'razorpay', 'created')";
         $stmt = $conn->prepare($sql);
         $stmt->execute([$user_id, $order_id, $razorpayOrderId, $service_name, $quantity, $instructions, $amount]);
 
-        // Now, display the payment button to the user
+        // Now, generate the checkout page
         echo '
             <!DOCTYPE html>
             <html lang="en">
@@ -145,3 +145,4 @@ elseif ($payment_method === 'razorpay') {
     }
 }
 ?>
+
