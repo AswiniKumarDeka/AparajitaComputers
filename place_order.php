@@ -21,7 +21,7 @@ $unit_price   = isset($_POST['unit_price']) ? floatval($_POST['unit_price']) : 0
 $quantity     = isset($_POST['quantity']) ? intval($_POST['quantity']) : 1;
 
 if ($unit_price <= 0 || $quantity <= 0) {
-    header("Location: index.html?error=Invalid+price+or+quantity");
+    header("Location: success.html?error=Invalid+price+or+quantity");
     exit;
 }
 
