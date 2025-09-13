@@ -2,7 +2,7 @@
 session_start();
 require 'db_connect.php';
 
-// --- CORRECTED: All 'require' and 'use' statements must be at the top-level scope ---
+// All 'require' and 'use' statements must be at the top-level scope
 require 'razorpay-php/Razorpay.php';
 use Razorpay\Api\Api;
 use Razorpay\Api\Errors\BadRequestError;
@@ -30,7 +30,7 @@ $payment_method = $_POST['payment_method'] ?? 'cod';
 
 // --- Basic Data Validation ---
 if ($quantity <= 0 || $amount <= 0 || !$customer_email) {
-    header("Location: index.html?error=Invalid+order+details.");
+    header("Location: place_order.php?error=Invalid+order+details.+Please+try+again.");
     exit;
 }
 
