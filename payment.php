@@ -2,13 +2,11 @@
 session_start();
 require 'db_connect.php';
 
-// Redirect if not logged in
 if (empty($_SESSION['user_id'])) {
     header("Location: login.html?error=Please+login+first");
     exit;
 }
 
-// Determine service details
 $service_name = $_GET['service'] ?? null;
 $unit_price   = isset($_GET['price']) ? floatval($_GET['price']) : 0;
 $quantity     = isset($_GET['quantity']) ? intval($_GET['quantity']) : 1;
@@ -18,7 +16,7 @@ if (!$service_name || $unit_price <= 0) {
     exit;
 }
 
-// Get customer email
+// Get logged in user email
 $customer_email = $_SESSION['email'] ?? '';
 if (empty($customer_email)) {
     $stmt = $conn->prepare("SELECT email FROM users WHERE id=? LIMIT 1");
@@ -27,7 +25,7 @@ if (empty($customer_email)) {
     if ($row) $customer_email = $row['email'];
 }
 
-$service_name_esc = htmlspecialchars($service_name, ENT_QUOTES);
+$service_name_esc   = htmlspecialchars($service_name, ENT_QUOTES);
 $customer_email_esc = htmlspecialchars($customer_email, ENT_QUOTES);
 ?>
 <!DOCTYPE html>
@@ -36,36 +34,19 @@ $customer_email_esc = htmlspecialchars($customer_email, ENT_QUOTES);
   <meta charset="UTF-8">
   <title>Complete Your Order</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-  document.addEventListener('DOMContentLoaded', function () {
-      const qtyEl = document.getElementById('quantity');
-      const price = parseFloat(document.getElementById('unit_price').value);
-      const totalEl = document.getElementById('total_amount');
-      const hiddenAmount = document.getElementById('hidden_amount');
-
-      function updateTotal() {
-          let q = parseInt(qtyEl.value) || 1;
-          if (q < 1) q = 1;
-          const total = q * price;
-          totalEl.textContent = "₹" + total.toFixed(2);
-          hiddenAmount.value = total.toFixed(2);
-      }
-
-      qtyEl.addEventListener('input', updateTotal);
-      updateTotal();
-  });
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/gsap.min.js"></script>
 </head>
 <body class="bg-gradient-to-r from-gray-100 to-gray-200 flex items-center justify-center min-h-screen">
 
-  <div class="max-w-lg w-full bg-white rounded-2xl shadow-xl transform transition hover:scale-105 duration-300 p-8">
-    <h1 class="text-3xl font-extrabold text-center text-teal-600 mb-6 animate-pulse">Complete Your Order</h1>
+  <div id="orderCard" class="max-w-lg w-full bg-white rounded-2xl shadow-xl transform opacity-0 translate-y-10 p-8">
+    <h1 class="text-3xl font-extrabold text-center text-teal-600 mb-6">Complete Your Order</h1>
 
     <form action="place_order.php" method="POST" class="space-y-5">
 
       <input type="hidden" name="service_name" value="<?php echo $service_name_esc; ?>">
       <input type="hidden" id="unit_price" value="<?php echo $unit_price; ?>">
       <input type="hidden" id="hidden_amount" name="amount" value="">
+      <input type="hidden" name="quantity" id="hidden_qty" value="<?php echo $quantity; ?>">
 
       <!-- Service -->
       <div>
@@ -76,7 +57,7 @@ $customer_email_esc = htmlspecialchars($customer_email, ENT_QUOTES);
       <!-- Quantity -->
       <div>
         <label class="block text-sm font-medium text-gray-600">Quantity</label>
-        <input type="number" id="quantity" name="quantity" value="<?php echo $quantity; ?>" min="1"
+        <input type="number" id="quantity" name="quantity_display" value="<?php echo $quantity; ?>" min="1"
           class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:ring-teal-500 focus:border-teal-500 p-2">
       </div>
 
@@ -119,6 +100,30 @@ $customer_email_esc = htmlspecialchars($customer_email, ENT_QUOTES);
       </div>
     </form>
   </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const qtyEl = document.getElementById('quantity');
+    const price = parseFloat(document.getElementById('unit_price').value);
+    const totalEl = document.getElementById('total_amount');
+    const hiddenAmount = document.getElementById('hidden_amount');
+    const hiddenQty = document.getElementById('hidden_qty');
+
+    function updateTotal() {
+        let q = parseInt(qtyEl.value) || 1;
+        if (q < 1) q = 1;
+        hiddenQty.value = q;
+        const total = q * price;
+        totalEl.textContent = "₹" + total.toFixed(2);
+        hiddenAmount.value = total.toFixed(2);
+    }
+
+    qtyEl.addEventListener('input', updateTotal);
+    updateTotal();
+
+    gsap.to("#orderCard", {opacity:1, y:0, duration:1, ease:"power3.out"});
+});
+</script>
 
 </body>
 </html>
