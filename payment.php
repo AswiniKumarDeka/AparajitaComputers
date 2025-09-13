@@ -26,7 +26,7 @@ if (empty($service_name) || $quantity < 1 || $amount <= 0) {
     exit;
 }
 
-// Insert order into database
+// Insert order
 $stmt = $conn->prepare("INSERT INTO orders 
     (user_id, service_name, quantity, amount, customer_email, instructions, payment_method, status, created_at) 
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
@@ -46,45 +46,62 @@ $stmt->execute([
 
 $order_id = $conn->lastInsertId();
 
+// COD → success page
 if ($payment_method === "cod") {
-    // Redirect directly to success page
     header("Location: success.php?order_id=" . urlencode($order_id));
     exit;
-} else {
-    // Razorpay Payment
-    ?>
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <title>Pay with Razorpay</title>
-      <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-    </head>
-    <body>
-      <h2>Redirecting to payment...</h2>
-      <script>
-        var options = {
-            "key": "rzp_test_BH9Fl1mKCz2rf8", // replace with your Razorpay key
-            "amount": "<?php echo intval($amount * 100); ?>", // amount in paise
-            "currency": "INR",
-            "name": "My Service",
-            "description": "Payment for <?php echo htmlspecialchars($service_name); ?>",
-            "order_id": "", 
-            "handler": function (response){
-                // ✅ After payment success, redirect to success.php
-                window.location.href = "success.php?order_id=<?php echo $order_id; ?>";
-            },
-            "prefill": {
-                "email": "<?php echo htmlspecialchars($customer_email); ?>"
-            },
-            "theme": {
-                "color": "#3399cc"
-            }
-        };
-        var rzp1 = new Razorpay(options);
-        rzp1.open();
-      </script>
-    </body>
-    </html>
-    <?php
 }
+
+// Razorpay → checkout
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pay with Razorpay</title>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+  <script>
+    var options = {
+        "key": "rzp_test_BH9Fl1mKCz2rf8",
+        "amount": "<?php echo intval($amount * 100); ?>", 
+        "currency": "INR",
+        "name": "Aparajita Computers",
+        "description": "Payment for <?php echo htmlspecialchars($service_name); ?>",
+        "order_id": "<?php echo $order_id; ?>", 
+        "handler": function (response){
+            // Send details to verify_payment.php
+            var form = document.createElement("form");
+            form.method = "POST";
+            form.action = "verify_payment.php";
+
+            var fields = {
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              order_id: "<?php echo $order_id; ?>"
+            };
+
+            for (var key in fields) {
+              var input = document.createElement("input");
+              input.type = "hidden";
+              input.name = key;
+              input.value = fields[key];
+              form.appendChild(input);
+            }
+
+            document.body.appendChild(form);
+            form.submit();
+        },
+        "prefill": {
+            "email": "<?php echo htmlspecialchars($customer_email); ?>"
+        },
+        "theme": {
+            "color": "#14b8a6"
+        }
+    };
+    var rzp = new Razorpay(options);
+    rzp.open();
+  </script>
+</body>
+</html>
