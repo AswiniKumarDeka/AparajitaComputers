@@ -178,7 +178,7 @@
             <p class="mb-2">📍 Aparajiita Computers, Balipota, Darrang, Assam , 784525</p>
             <p class="mb-2">📞<a href="tel:+918638811645" class="hover:text-cyan-400">+91 8638811645</a></p>
             <p class="mb-2">📧<a href="mailto:aparajita.contact@gmail.com" class="hover:text-cyan-400">aparajita.contact@gmail.com</a></p>
-            <p>🕒 24*7 : 9:00 AM - 8:00 PM</p>
+            <p>🕒 Sunday - Saturday : 9:00 AM - 8:00 PM</p>
             <p class="text-sm mt-6">&copy; 2025 Aparajita Computers. All Rights Reserved.</p>
             <p class="text-sm mt-1">Designed with ❤️ in Darrang (Assam).</p>
             <p class="text-sm mt-1">Designed by Aswini.</p>
@@ -221,36 +221,36 @@
         mobileMenuOverlay.addEventListener('click', toggleMenu);
 
         // --- FIXED: Slideshow logic is now active ---
-        const slideshowContainer = document.getElementById('slideshow-container');
-        const images = [
-             'https://placehold.co/1920x1080/000000/FFFFFF?text=High+Quality+Printing',
-             'https://placehold.co/1920x1080/111827/FFFFFF?text=Secure+Online+Forms',
-             'https://placehold.co/1920x1080/1f2937/FFFFFF?text=Official+Documents',
-        ];
-        let currentImageIndex = 0;
+        // const slideshowContainer = document.getElementById('slideshow-container');
+        // const images = [
+        //      'https://placehold.co/1920x1080/000000/FFFFFF?text=High+Quality+Printing',
+        //      'https://placehold.co/1920x1080/111827/FFFFFF?text=Secure+Online+Forms',
+        //      'https://placehold.co/1920x1080/1f2937/FFFFFF?text=Official+Documents',
+        // ];
+        // let currentImageIndex = 0;
 
-        const showNextImage = () => {
-             const oldSlide = slideshowContainer.querySelector('.slide');
-             if(oldSlide) oldSlide.style.opacity = 0;
+        // const showNextImage = () => {
+        //      const oldSlide = slideshowContainer.querySelector('.slide');
+        //      if(oldSlide) oldSlide.style.opacity = 0;
             
-             currentImageIndex = (currentImageIndex + 1) % images.length;
-             const newSlide = document.createElement('div');
-             newSlide.className = 'slide';
-             newSlide.style.backgroundImage = `url('${images[currentImageIndex]}')`;
+        //      currentImageIndex = (currentImageIndex + 1) % images.length;
+        //      const newSlide = document.createElement('div');
+        //      newSlide.className = 'slide';
+        //      newSlide.style.backgroundImage = `url('${images[currentImageIndex]}')`;
             
-             setTimeout(() => {
-                  if(oldSlide) slideshowContainer.removeChild(oldSlide);
-                  slideshowContainer.appendChild(newSlide);
-                  newSlide.style.opacity = 1;
-             }, 1500);
-        };
-        // Preload first image
-        const firstSlide = document.createElement('div');
-        firstSlide.className = 'slide';
-        firstSlide.style.backgroundImage = `url('${images[0]}')`;
-        slideshowContainer.appendChild(firstSlide);
-        firstSlide.style.opacity = 1;
-        setInterval(showNextImage, 5000); // Change image every 5 seconds
+        //      setTimeout(() => {
+        //           if(oldSlide) slideshowContainer.removeChild(oldSlide);
+        //           slideshowContainer.appendChild(newSlide);
+        //           newSlide.style.opacity = 1;
+        //      }, 1500);
+        // };
+        // // Preload first image
+        // const firstSlide = document.createElement('div');
+        // firstSlide.className = 'slide';
+        // firstSlide.style.backgroundImage = `url('${images[0]}')`;
+        // slideshowContainer.appendChild(firstSlide);
+        // firstSlide.style.opacity = 1;
+        // setInterval(showNextImage, 5000); // Change image every 5 seconds
         // --- END: MOBILE MENU & SLIDESHOW LOGIC ---
 
 
