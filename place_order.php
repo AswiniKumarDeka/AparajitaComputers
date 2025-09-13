@@ -2,90 +2,124 @@
 session_start();
 require 'db_connect.php';
 
-// Require PHPMailer
-require 'phpmailer/PHPMailer.php';
-require 'phpmailer/SMTP.php';
-require 'phpmailer/Exception.php';
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-
-// --- Check if user logged in ---
+// Redirect if not logged in
 if (empty($_SESSION['user_id'])) {
-    header("Location: login.html?error=Please login first");
+    header("Location: login.html?error=Please+login+first");
     exit;
 }
 
-// --- Allow only POST ---
-if ($_SERVER["REQUEST_METHOD"] !== "POST") {
-    header("Location: payment.php?error=Invalid request");
+// Determine service details
+$service_name = $_GET['service'] ?? null;
+$unit_price   = isset($_GET['price']) ? floatval($_GET['price']) : 0;
+$quantity     = isset($_GET['quantity']) ? intval($_GET['quantity']) : 1;
+
+if (!$service_name || $unit_price <= 0) {
+    header("Location: index.html?error=Invalid+service+selected");
     exit;
 }
 
-$user_id   = $_SESSION['user_id'];
-$service   = trim($_POST['service_name'] ?? '');
-$quantity  = intval($_POST['quantity'] ?? 1);
-$amount    = floatval($_POST['amount'] ?? 0);
-$email     = filter_var($_POST['customer_email'] ?? '', FILTER_VALIDATE_EMAIL);
-$method    = $_POST['payment_method'] ?? 'cod';
-$notes     = trim($_POST['instructions'] ?? "");
-
-// --- Validation ---
-if ($service === '' || $quantity <= 0 || $amount <= 0 || !$email) {
-    header("Location: payment.php?error=Invalid order data");
-    exit;
+// Get customer email
+$customer_email = $_SESSION['email'] ?? '';
+if (empty($customer_email)) {
+    $stmt = $conn->prepare("SELECT email FROM users WHERE id=? LIMIT 1");
+    $stmt->execute([$_SESSION['user_id']]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($row) $customer_email = $row['email'];
 }
 
-// --- Generate Order ID ---
-$order_id = 'AC-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), 7, 6));
+$service_name_esc = htmlspecialchars($service_name, ENT_QUOTES);
+$customer_email_esc = htmlspecialchars($customer_email, ENT_QUOTES);
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Complete Your Order</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+      const qtyEl = document.getElementById('quantity');
+      const price = parseFloat(document.getElementById('unit_price').value);
+      const totalEl = document.getElementById('total_amount');
+      const hiddenAmount = document.getElementById('hidden_amount');
 
-try {
-    // --- Save order ---
-    $sql = "INSERT INTO payments 
-            (user_id, order_id, service_name, quantity, instructions, amount, payment_method, payment_status) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')";
-    $stmt = $conn->prepare($sql);
-    $stmt->execute([$user_id, $order_id, $service, $quantity, $notes, $amount, $method]);
+      function updateTotal() {
+          let q = parseInt(qtyEl.value) || 1;
+          if (q < 1) q = 1;
+          const total = q * price;
+          totalEl.textContent = "₹" + total.toFixed(2);
+          hiddenAmount.value = total.toFixed(2);
+      }
 
-    // --- Send acknowledgement email ---
-    $mail = new PHPMailer(true);
-    try {
-        $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = 'aparajitacomputers.shop@gmail.com';
-        $mail->Password   = 'YOUR_APP_PASSWORD'; // Use Gmail App Password
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-        $mail->Port       = 465;
+      qtyEl.addEventListener('input', updateTotal);
+      updateTotal();
+  });
+  </script>
+</head>
+<body class="bg-gradient-to-r from-indigo-100 via-purple-100 to-pink-100 flex items-center justify-center min-h-screen">
 
-        $mail->setFrom('aparajitacomputers.shop@gmail.com', 'Aparajita Computers');
-        $mail->addAddress($email);
+  <div class="max-w-lg w-full bg-white rounded-2xl shadow-2xl transform transition hover:scale-105 duration-300 p-8 animate-fadeIn">
+    <h1 class="text-3xl font-extrabold text-center text-indigo-600 mb-6 animate-bounce">Complete Your Order</h1>
 
-        $mail->isHTML(true);
-        $mail->Subject = "Order Confirmation - {$order_id}";
-        $mail->Body = "
-            <h2>✅ Order Confirmed</h2>
-            <p>Thank you for your order. Here are the details:</p>
-            <ul>
-                <li><strong>Order ID:</strong> {$order_id}</li>
-                <li><strong>Service:</strong> " . htmlspecialchars($service) . "</li>
-                <li><strong>Quantity:</strong> {$quantity}</li>
-                <li><strong>Total Amount:</strong> ₹" . number_format($amount, 2) . "</li>
-                <li><strong>Payment Method:</strong> {$method}</li>
-                <li><strong>Status:</strong> Pending</li>
-            </ul>
-            <p>We will contact you shortly.</p>
-        ";
-        $mail->send();
-    } catch (Exception $e) {
-        error_log("Email error: " . $mail->ErrorInfo);
-    }
+    <!-- IMPORTANT: action should point to payment.php -->
+    <form action="payment.php" method="POST" class="space-y-5">
 
-    // --- Redirect success ---
-    header("Location: success.php?order_id={$order_id}");
-    exit;
+      <input type="hidden" name="service_name" value="<?php echo $service_name_esc; ?>">
+      <input type="hidden" id="unit_price" value="<?php echo $unit_price; ?>">
+      <input type="hidden" id="hidden_amount" name="amount" value="">
 
-} catch (PDOException $e) {
-    error_log("DB Error: " . $e->getMessage());
-    header("Location: payment.php?error=Could not place your order. Please try again.");
-    exit;
-}
+      <!-- Service -->
+      <div>
+        <label class="block text-sm font-medium text-gray-600">Service</label>
+        <p class="mt-1 font-semibold"><?php echo $service_name_esc; ?></p>
+      </div>
+
+      <!-- Quantity -->
+      <div>
+        <label class="block text-sm font-medium text-gray-600">Quantity</label>
+        <input type="number" id="quantity" name="quantity" value="<?php echo $quantity; ?>" min="1"
+          class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 p-2">
+      </div>
+
+      <!-- Total Amount -->
+      <div>
+        <label class="block text-sm font-medium text-gray-600">Total Amount</label>
+        <p id="total_amount" class="text-xl font-bold text-indigo-700">₹0.00</p>
+      </div>
+
+      <!-- Email -->
+      <div>
+        <label class="block text-sm font-medium text-gray-600">Your Email</label>
+        <input type="email" name="customer_email" value="<?php echo $customer_email_esc; ?>" required
+          class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 p-2">
+      </div>
+
+      <!-- Instructions -->
+      <div>
+        <label class="block text-sm font-medium text-gray-600">Special Instructions</label>
+        <textarea name="instructions" rows="3" placeholder="Any details..."
+          class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 p-2"></textarea>
+      </div>
+
+      <!-- Payment Method -->
+      <div>
+        <label class="block text-sm font-medium text-gray-600">Payment Method</label>
+        <select name="payment_method"
+          class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 p-2">
+          <option value="cod">Cash on Delivery (COD)</option>
+          <option value="razorpay">Pay Online (Razorpay)</option>
+        </select>
+      </div>
+
+      <!-- Submit Button -->
+      <div class="text-center">
+        <button type="submit"
+          class="w-full bg-indigo-600 text-white font-semibold py-3 rounded-lg shadow-lg transform transition hover:scale-105 hover:bg-indigo-700 duration-300">
+          🚀 Place Order
+        </button>
+      </div>
+    </form>
+  </div>
+
+</body>
+</html>
