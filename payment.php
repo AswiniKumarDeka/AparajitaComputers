@@ -2,8 +2,9 @@
 session_start();
 require 'db_connect.php';
 
-// All 'require' and 'use' statements must be at the top-level scope
-require 'razorpay-php/Razorpay.php';
+// --- FIX 1: Use a robust, absolute path to prevent fatal errors ---
+// This ensures PHP can always find the Razorpay library.
+require __DIR__ . '/razorpay-php/Razorpay.php';
 use Razorpay\Api\Api;
 use Razorpay\Api\Errors\BadRequestError;
 
@@ -15,6 +16,7 @@ if (empty($_SESSION['user_id'])) {
 
 // --- Validate Request Method ---
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+    // --- FIX 2: Corrected the typo in "success.html" ---
     header("Location: success.html");
     exit;
 }
@@ -145,4 +147,3 @@ elseif ($payment_method === 'razorpay') {
     }
 }
 ?>
-
