@@ -15,7 +15,7 @@ if (empty($_SESSION['user_id'])) {
 
 // --- Validate Request Method ---
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
-    header("Location: succcess.html");
+    header("Location: success.html");
     exit;
 }
 
